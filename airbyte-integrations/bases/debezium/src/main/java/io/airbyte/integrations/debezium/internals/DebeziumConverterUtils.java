@@ -44,8 +44,6 @@ public final class DebeziumConverterUtils {
     } else if (input instanceof Number) {
       return DataTypeUtils.toISO8601String(
           new Timestamp(((Number) input).longValue()).toLocalDateTime());
-    } else if (input instanceof Date) {
-      return DataTypeUtils.toISO8601String((Date) input);
     }
      else if (input instanceof String) {
       try {
