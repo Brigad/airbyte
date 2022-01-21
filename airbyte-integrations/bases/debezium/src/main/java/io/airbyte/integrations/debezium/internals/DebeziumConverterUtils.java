@@ -32,7 +32,7 @@ public final class DebeziumConverterUtils {
      * data type would be returned. I just went ahead and handled the data types that made sense.
      * Secondly, we use LocalDateTime to handle this cause it represents DATETIME datatype in JAVA
      */
-    LOGGER.log(input.getClass().getName());
+    LOGGER.info(input.getClass().getName());
     if (input instanceof LocalDateTime) {
       return DataTypeUtils.toISO8601String((LocalDateTime) input);
     } else if (input instanceof LocalDate) {
