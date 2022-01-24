@@ -21,7 +21,7 @@ public class PostgresConverter implements CustomConverter<SchemaBuilder, Relatio
   private final String[] DATE_TYPES = {"DATE", "DATETIME", "TIME", "TIMETZ", "INTERVAL", "TIMESTAMP"};
   private final String[] BIT_TYPES = {"BIT", "VARBIT"};
   private final String[] MONEY_ITEM_TYPE = {"MONEY"};
-  private final String[] GEOMETRICS_TYPES = {"BOX", "CIRCLE", "LINE", "LSEG", "POINT", "POLYGON", "PATH"};
+  private final String[] GEOMETRICS_TYPES = {"BOX", "CIRCLE", "LINE", "LSEG", "POINT", "POLYGON", "PATH", "GEOMETRY"};
   private final String[] TEXT_TYPES = {"VARCHAR", "VARBINARY", "BLOB", "TEXT", "LONGTEXT", "TINYTEXT", "MEDIUMTEXT", "INVENTORY_ITEM", "TSVECTOR"};
 
   @Override
