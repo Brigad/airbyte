@@ -8,6 +8,10 @@
     string
 {% endmacro %}
 
+{%- macro databricks__type_json() -%}
+    string
+{%- endmacro -%}
+
 {%- macro redshift__type_json() -%}
     varchar
 {%- endmacro -%}
@@ -83,6 +87,10 @@
     INT
 {% endmacro %}
 
+{% macro databricks__type_int() %}
+    INT
+{% endmacro %}
+
 
 {# bigint ------------------------------------------------- #}
 {% macro mysql__type_bigint() %}
@@ -97,6 +105,10 @@
     BIGINT
 {% endmacro %}
 
+{% macro databricks__type_bigint() %}
+    BIGINT
+{% endmacro %}
+
 
 {# numeric ------------------------------------------------- --#}
 {% macro mysql__type_numeric() %}
@@ -105,6 +117,10 @@
 
 {% macro clickhouse__type_numeric() %}
     Float64
+{% endmacro %}
+
+{% macro databricks__type_numeric() %}
+    FLOAT
 {% endmacro %}
 
 

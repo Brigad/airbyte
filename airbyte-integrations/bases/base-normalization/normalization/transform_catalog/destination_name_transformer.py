@@ -27,6 +27,8 @@ DESTINATION_SIZE_LIMITS = {
     DestinationType.MSSQL.value: 64,
     # https://stackoverflow.com/questions/68358686/what-is-the-maximum-length-of-a-column-in-clickhouse-can-it-be-modified
     DestinationType.CLICKHOUSE.value: 63,
+    # https://www.stitchdata.com/docs/destinations/databricks-delta/reference#:~:text=Must%20be%20less,Databricks%20Delta%20Lake%20(AWS). (According that stitch is correct)
+    DestinationType.DATABRICKS.value: 122
 }
 
 # DBT also needs to generate suffix to table names, so we need to make sure it has enough characters to do so...

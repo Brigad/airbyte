@@ -1175,7 +1175,17 @@ where 1 = 1
             elif partition_by == PartitionScheme.NOTHING:
                 pass
             else:
-                config["cluster_by"] = f'["{self.airbyte_emitted_at.upper()}"]'
+                config["clustered_by"] = f'["{self.airbyte_emitted_at.upper()}"]'
+        elif self.destination_type == DestinationType.DATABRICKS:
+            if partition_by == PartitionScheme.UNIQUE_KEY:
+                config["clustered_by"] = f'["{self.airbyte_unique_key}","{self.airbyte_emitted_at}"]'
+            elif partition_by == PartitionScheme.ACTIVE_ROW:
+                config["clustered_by"] = f'["{self.airbyte_unique_key}_scd","{self.airbyte_emitted_at}"]'
+            elif partition_by == PartitionScheme.NOTHING:
+                pass
+            else:
+                config["clustered_by"] = f'"{self.airbyte_emitted_at}"'
+            config["buckets"] = 8
         if unique_key:
             config["unique_key"] = f'"{unique_key}"'
         elif not self.parent:
