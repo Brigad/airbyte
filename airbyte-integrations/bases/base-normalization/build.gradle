@@ -78,6 +78,7 @@ task airbyteDockerSnowflake(type: Exec, dependsOn: checkSshScriptCopy) {
     dependsOn assemble
 }
 
+
 airbyteDocker.dependsOn(airbyteDockerMSSql)
 airbyteDocker.dependsOn(airbyteDockerMySql)
 airbyteDocker.dependsOn(airbyteDockerOracle)

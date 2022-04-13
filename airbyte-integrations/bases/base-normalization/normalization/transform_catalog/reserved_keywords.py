@@ -2789,7 +2789,7 @@ DATABRICKS = {
     "WHERE",
     "WINDOW",
     "WITH",
-    "YEAR"
+    "YEAR",
 }
 
 # In ClickHouse, keywords are not reserved.

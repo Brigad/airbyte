@@ -32,22 +32,18 @@ class TransformConfig:
         original_config = self.read_json_config(inputs["config"])
         integration_type = inputs["integration_type"]
         transformed_config = self.transform(integration_type, original_config)
-        self.write_yaml_config(
-            inputs["output_path"], transformed_config, "profiles.yml")
+        self.write_yaml_config(inputs["output_path"], transformed_config, "profiles.yml")
         if self.is_ssh_tunnelling(original_config):
-            self.write_ssh_config(
-                inputs["output_path"], original_config, transformed_config)
+            self.write_ssh_config(inputs["output_path"], original_config, transformed_config)
 
     @staticmethod
     def parse(args):
         parser = argparse.ArgumentParser(add_help=False)
-        parser.add_argument("--config", type=str,
-                            required=True, help="path to original config")
+        parser.add_argument("--config", type=str, required=True, help="path to original config")
         parser.add_argument(
             "--integration-type", type=DestinationType, choices=list(DestinationType), required=True, help="type of integration"
         )
-        parser.add_argument("--out", type=str, required=True,
-                            help="path to output transformed config to")
+        parser.add_argument("--out", type=str, required=True, help="path to output transformed config to")
 
         parsed_args = parser.parse_args(args)
         print(str(parsed_args))
@@ -59,8 +55,7 @@ class TransformConfig:
         }
 
     def transform(self, integration_type: DestinationType, config: Dict[str, Any]):
-        data = pkgutil.get_data(self.__class__.__module__.split(".")[
-                                0], "transform_config/profile_base.yml")
+        data = pkgutil.get_data(self.__class__.__module__.split(".")[0], "transform_config/profile_base.yml")
         if not data:
             raise FileExistsError("Failed to load profile_base.yml")
         base_profile = yaml.load(data, Loader=yaml.FullLoader)
@@ -142,8 +137,7 @@ class TransformConfig:
         if ":" in config["dataset_id"]:
             splits = config["dataset_id"].split(":")
             if len(splits) > 2:
-                raise ValueError(
-                    "Invalid format for dataset ID (expected at most one colon)")
+                raise ValueError("Invalid format for dataset ID (expected at most one colon)")
             project_id, dataset_id = splits
             if project_id != config["project_id"]:
                 raise ValueError(
@@ -172,8 +166,7 @@ class TransformConfig:
         print("transform_postgres")
 
         if TransformConfig.is_ssh_tunnelling(config):
-            config = TransformConfig.get_ssh_altered_config(
-                config, port_key="port", host_key="host")
+            config = TransformConfig.get_ssh_altered_config(config, port_key="port", host_key="host")
 
         # https://docs.getdbt.com/reference/warehouse-profiles/postgres-profile
         dbt_config = {
@@ -213,8 +206,7 @@ class TransformConfig:
     def transform_snowflake(config: Dict[str, Any]):
         print("transform_snowflake")
         # here account is everything before ".snowflakecomputing.com" as it can include account, region & cloud environment information)
-        account = config["host"].replace(".snowflakecomputing.com", "").replace(
-            "http://", "").replace("https://", "")
+        account = config["host"].replace(".snowflakecomputing.com", "").replace("http://", "").replace("https://", "")
         # https://docs.getdbt.com/reference/warehouse-profiles/snowflake-profile
         # snowflake coerces most of these values to uppercase, but if dbt has them as a different casing it has trouble finding the resources it needs. thus we coerce them to upper.
         dbt_config = {
@@ -251,8 +243,7 @@ class TransformConfig:
         print("transform_mysql")
 
         if TransformConfig.is_ssh_tunnelling(config):
-            config = TransformConfig.get_ssh_altered_config(
-                config, port_key="port", host_key="host")
+            config = TransformConfig.get_ssh_altered_config(config, port_key="port", host_key="host")
 
         # https://github.com/dbeatty10/dbt-mysql#configuring-your-profile
         dbt_config = {
@@ -322,6 +313,7 @@ class TransformConfig:
             dbt_config["port"] = config["tcp-port"]
         return dbt_config
 
+    @staticmethod
     def transform_databricks(config: Dict[str, Any]):
         print("transform_databricks")
         # https://docs.getdbt.com/reference/warehouse-profiles/databricks-profile
@@ -329,7 +321,6 @@ class TransformConfig:
             "type": "databricks",
             "host": config["databricks_server_hostname"],
             "http_path": config["databricks_http_path"],
-            "port": config["databricks_port"],
             "token": config["databricks_personal_access_token"],
             "threads": 8,
             "connect_retries": 5,
