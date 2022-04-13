@@ -77,6 +77,10 @@ task airbyteDockerSnowflake(type: Exec, dependsOn: checkSshScriptCopy) {
     configure buildAirbyteDocker('snowflake')
     dependsOn assemble
 }
+task airbyteDockerDatabricks(type: Exec, dependsOn: checkSshScriptCopy) {
+    configure buildAirbyteDocker('databricks')
+    dependsOn assemble
+}
 
 
 airbyteDocker.dependsOn(airbyteDockerMSSql)
@@ -84,6 +88,8 @@ airbyteDocker.dependsOn(airbyteDockerMySql)
 airbyteDocker.dependsOn(airbyteDockerOracle)
 airbyteDocker.dependsOn(airbyteDockerClickhouse)
 airbyteDocker.dependsOn(airbyteDockerSnowflake)
+airbyteDocker.dependsOn(airbyteDockerDatabricks)
+
 
 task("customIntegrationTestPython", type: PythonTask, dependsOn: installTestReqs) {
     module = "pytest"
@@ -98,6 +104,7 @@ task("customIntegrationTestPython", type: PythonTask, dependsOn: installTestReqs
     dependsOn ':airbyte-integrations:connectors:destination-oracle:airbyteDocker'
     dependsOn ':airbyte-integrations:connectors:destination-mssql:airbyteDocker'
     dependsOn ':airbyte-integrations:connectors:destination-clickhouse:airbyteDocker'
+    dependsOn ':airbyte-integrations:connectors:destination-databricks:airbyteDocker'
 }
 
 integrationTest.dependsOn("customIntegrationTestPython")
