@@ -5,10 +5,9 @@
 package io.airbyte.integrations.destination.databricks;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import io.airbyte.integrations.destination.s3.S3DestinationConfig;
-import io.airbyte.integrations.destination.s3.parquet.S3ParquetFormatConfig;
+import io.airbyte.integrations.destination.s3.credential.S3AccessKeyCredentialConfig;
 
 /**
  * Currently only S3 is supported. So the data source config is always {@link S3DestinationConfig}.
@@ -63,7 +62,9 @@ public class DatabricksDestinationConfig {
         dataSource.get("s3_bucket_name").asText(),
         dataSource.get("s3_bucket_path").asText(),
         dataSource.get("s3_bucket_region").asText())
-        .withFormatConfig(new S3ParquetFormatConfig(new ObjectMapper().createObjectNode()))
+        .withCredentialConfig(new S3AccessKeyCredentialConfig(
+          dataSource.get("s3_access_key_id").asText(),
+          dataSource.get("s3_secret_access_key").asText()))
         .get();
   }
 

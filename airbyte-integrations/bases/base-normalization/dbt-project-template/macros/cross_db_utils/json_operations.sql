@@ -43,6 +43,15 @@
     {{ "'$.\"" ~ json_path_list|join(".") ~ "\"'" }}
 {%- endmacro %}
 
+{% macro databricks__format_json_path(json_path_list) -%}
+    {# -- '$.x.y.z' #}
+    {%- set str_list = [] -%}
+    {%- for json_path in json_path_list -%}
+        {%- if str_list.append(json_path.replace("'", "\\'")) -%} {%- endif -%}
+    {%- endfor -%}
+    {{ "'$." ~ str_list|join(".") ~ "'" }}
+{%- endmacro %}
+
 {% macro redshift__format_json_path(json_path_list) -%}
     {%- set str_list = [] -%}
     {%- for json_path in json_path_list -%}

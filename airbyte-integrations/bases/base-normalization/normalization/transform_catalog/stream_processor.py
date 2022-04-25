@@ -1114,7 +1114,7 @@ where 1 = 1
             else:
                 return TableMaterializationType.TABLE
 
-    def partition_config_bigquery(self, partition_by: PartitionScheme, unique_key: str) -> Dict:
+    def partition_config_bigquery(self, partition_by: PartitionScheme) -> Dict:
         config = {}
         # see https://docs.getdbt.com/reference/resource-configs/bigquery-configs
         if partition_by == PartitionScheme.UNIQUE_KEY:
@@ -1133,7 +1133,7 @@ where 1 = 1
             config["partition_by"] = '{"field": "' + self.airbyte_emitted_at + '", "data_type": "timestamp", "granularity": "day"}'
         return config
 
-    def partition_config_postgres(self, partition_by: PartitionScheme, unique_key: str) -> Dict:
+    def partition_config_postgres(self, partition_by: PartitionScheme) -> Dict:
         # see https://docs.getdbt.com/reference/resource-configs/postgres-configs
         config = {}
         if partition_by == PartitionScheme.ACTIVE_ROW:
@@ -1150,7 +1150,7 @@ where 1 = 1
             config["indexes"] = "[{'columns':['" + self.airbyte_emitted_at + "'],'type':'btree'}]"
         return config
 
-    def partition_config_redshift(self, partition_by: PartitionScheme, unique_key: str) -> Dict:
+    def partition_config_redshift(self, partition_by: PartitionScheme) -> Dict:
         # see https://docs.getdbt.com/reference/resource-configs/redshift-configs
         config = {}
         if partition_by == PartitionScheme.ACTIVE_ROW:
@@ -1163,7 +1163,7 @@ where 1 = 1
             config["sort"] = f'"{self.airbyte_emitted_at}"'
         return config
 
-    def partition_config_snowflake(self, partition_by: PartitionScheme, unique_key: str) -> Dict:
+    def partition_config_snowflake(self, partition_by: PartitionScheme) -> Dict:
         # see https://docs.getdbt.com/reference/resource-configs/snowflake-configs
         config = {}
         if partition_by == PartitionScheme.ACTIVE_ROW:
@@ -1176,26 +1176,11 @@ where 1 = 1
             config["clustered_by"] = f'["{self.airbyte_emitted_at.upper()}"]'
         return config
 
-    def partition_config_databricks(self, partition_by: PartitionScheme, unique_key: str) -> Dict:
-        # see https://docs.getdbt.com/reference/resource-configs/snowflake-configs
-        config = {}
-        if partition_by == PartitionScheme.UNIQUE_KEY:
-            config["clustered_by"] = f'["{self.airbyte_unique_key}","{self.airbyte_emitted_at}"]'
-        elif partition_by == PartitionScheme.ACTIVE_ROW:
-            config["clustered_by"] = f'["{self.airbyte_unique_key}_scd","{self.airbyte_emitted_at}"]'
-        elif partition_by == PartitionScheme.NOTHING:
-            pass
-        else:
-            config["clustered_by"] = f'"{self.airbyte_emitted_at}"'
-        config["buckets"] = 8
-        return config
-
     partition_configurers = {
         DestinationType.BIGQUERY: partition_config_bigquery,
         DestinationType.POSTGRES: partition_config_postgres,
         DestinationType.SNOWFLAKE: partition_config_snowflake,
         DestinationType.REDSHIFT: partition_config_redshift,
-        DestinationType.DATABRICKS: partition_config_databricks,
     }
 
     def get_model_partition_config(self, partition_by: PartitionScheme, unique_key: str) -> Dict:
@@ -1208,7 +1193,11 @@ where 1 = 1
         But in certain models, such as SCD tables for example, we also need to retrieve older data to update their type 2 SCD end_dates,
         thus a different partitioning scheme is used to optimize that use case.
         """
-        config = self.configurers[self.destination_type] and self.configurers[self.destination_type](partition_by, unique_key) or {}
+        config = (
+            self.destination_type in self.partition_configurers.keys()
+            and self.partition_configurers[self.destination_type](self, partition_by)
+            or {}
+        )
 
         if unique_key:
             config["unique_key"] = f'"{unique_key}"'

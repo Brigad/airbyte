@@ -166,11 +166,15 @@ class DestinationNameTransformer:
         if truncate:
             result = self.truncate_identifier_name(input_name=result, conflict=conflict, conflict_level=conflict_level)
         if self.needs_quotes(result):
-            if self.destination_type.value != DestinationType.MYSQL.value:
+            if (
+                self.destination_type.value != DestinationType.MYSQL.value
+                and self.destination_type.value != DestinationType.DATABRICKS.value
+            ):
                 result = result.replace('"', '""')
             else:
                 result = result.replace("`", "_")
-            result = result.replace("'", "\\'")
+            if self.destination_type.value != DestinationType.DATABRICKS.value:
+                result = result.replace("'", "\\'")
             result = self.__normalize_identifier_case(result, is_quoted=True)
             result = self.apply_quote(result)
             if not in_jinja:
@@ -202,6 +206,8 @@ class DestinationNameTransformer:
             doesnt_start_with_alphaunderscore = match("[^A-Za-z_]", result[0]) is not None
             if is_column and doesnt_start_with_alphaunderscore:
                 result = f"_{result}"
+        elif self.destination_type.value == DestinationType.DATABRICKS.value:
+            result = transform_standard_naming(result)
         return result
 
     def __normalize_identifier_case(self, input_name: str, is_quoted: bool = False) -> str:
@@ -231,8 +237,7 @@ class DestinationNameTransformer:
         elif self.destination_type.value == DestinationType.CLICKHOUSE.value:
             pass
         elif self.destination_type.value == DestinationType.DATABRICKS.value:
-            if not is_quoted and not self.needs_quotes(input_name):
-                result = input_name.lower()
+            pass
         else:
             raise KeyError(f"Unknown destination type {self.destination_type}")
         return result
@@ -272,8 +277,7 @@ class DestinationNameTransformer:
         elif self.destination_type.value == DestinationType.CLICKHOUSE.value:
             pass
         elif self.destination_type.value == DestinationType.DATABRICKS.value:
-            if not is_quoted and not self.needs_quotes(input_name):
-                result = input_name.lower()
+            result = input_name.lower()
         else:
             raise KeyError(f"Unknown destination type {self.destination_type}")
         return result

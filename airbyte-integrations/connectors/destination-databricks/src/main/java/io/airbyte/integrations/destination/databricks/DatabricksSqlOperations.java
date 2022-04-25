@@ -34,6 +34,12 @@ public class DatabricksSqlOperations extends JdbcSqlOperations {
   }
 
   @Override
+  public String copyTableQuery(final JdbcDatabase database, final String schemaName, final String srcTableName, final String dstTableName) {
+    return String.format("COPY INTO %s.%s FROM (SELECT * FROM %s.%s)", schemaName, dstTableName, schemaName, srcTableName);
+  }
+
+
+  @Override
   public void createSchemaIfNotExists(final JdbcDatabase database, final String schemaName) throws Exception {
     database.execute(String.format("create database if not exists %s;", schemaName));
   }

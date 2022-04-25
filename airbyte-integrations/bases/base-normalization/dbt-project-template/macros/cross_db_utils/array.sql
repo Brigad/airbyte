@@ -52,7 +52,7 @@
 {%- endmacro %}
 
 {% macro databricks__cross_join_unnest(stream_name, array_col) -%}
-    lateral view outer explode({{ array_col }}) as {{ array_col }}
+    lateral view outer explode(from_json({{ array_col }}, 'array<string>')) as _airbyte_nested_data
 {%- endmacro %}
 
 {% macro sqlserver__cross_join_unnest(stream_name, array_col) -%}
@@ -89,6 +89,10 @@
 {%- endmacro %}
 
 {% macro mysql__unnested_column_value(column_col) -%}
+    _airbyte_nested_data
+{%- endmacro %}
+
+{% macro databricks__unnested_column_value(column_col) -%}
     _airbyte_nested_data
 {%- endmacro %}
 

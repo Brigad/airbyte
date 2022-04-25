@@ -23,6 +23,7 @@ RUN pip install .
 
 WORKDIR /airbyte/normalization_code/dbt-template/
 # Download external dbt dependencies
+RUN pip install dbt-databricks==1.0.0
 RUN dbt deps
 
 WORKDIR /airbyte

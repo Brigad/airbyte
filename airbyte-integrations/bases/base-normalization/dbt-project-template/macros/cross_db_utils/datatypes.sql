@@ -154,6 +154,12 @@
     timestamp
 {% endmacro %}
 
+{#-- Spark timestamps are already 'point in time', even if converted / stored without the original tz info, relative to session tz  --#}
+{#-- cf: https://docs.databricks.com/spark/latest/dataframes-datasets/dates-timestamps.html --#}
+{% macro databricks__type_timestamp_with_timezone() %}
+    timestamp
+{% endmacro %}
+
 {#-- MySQL doesnt allow cast operation to work with TIMESTAMP so we have to use char --#}
 {%- macro mysql__type_timestamp_with_timezone() -%}
     char

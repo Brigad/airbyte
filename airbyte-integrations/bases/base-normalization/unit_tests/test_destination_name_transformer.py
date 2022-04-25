@@ -112,7 +112,7 @@ def test_transform_standard_naming(input_str: str, expected: str):
         ("Identifier Name", "Redshift", "{{ adapter.quote('identifier name') }}", "adapter.quote('identifier name')"),
         ("Identifier Name", "MySQL", "{{ adapter.quote('Identifier Name') }}", "adapter.quote('Identifier Name')"),
         ("Identifier Name", "MSSQL", "{{ adapter.quote('Identifier Name') }}", "adapter.quote('Identifier Name')"),
-        ("Identifier Name", "Databricks", "{{ adapter.quote('Identifier Name') }}", "adapter.quote('Identifier Name')"),
+        ("Identifier Name", "Databricks", "Identifier_Name", "'Identifier_Name'"),
         # Reserved Word for BigQuery and MySQL only
         ("Groups", "Postgres", "groups", "'groups'"),
         ("Groups", "BigQuery", "{{ adapter.quote('Groups') }}", "adapter.quote('Groups')"),
@@ -120,7 +120,7 @@ def test_transform_standard_naming(input_str: str, expected: str):
         ("Groups", "Redshift", "groups", "'groups'"),
         ("Groups", "MySQL", "{{ adapter.quote('Groups') }}", "adapter.quote('Groups')"),
         ("Groups", "MSSQL", "groups", "'groups'"),
-        ("Groups", "Databricks", "groups", "'groups'"),
+        ("Groups", "Databricks", "Groups", "'Groups'"),
     ],
 )
 def test_normalize_column_name(input_str: str, destination_type: str, expected: str, expected_in_jinja: str):

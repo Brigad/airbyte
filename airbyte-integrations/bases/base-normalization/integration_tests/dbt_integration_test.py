@@ -326,6 +326,8 @@ class DbtIntegrationTest(object):
             }
         elif destination_type.value == DestinationType.MYSQL.value:
             profiles_config["database"] = self.target_schema
+        elif destination_type.value == DestinationType.DATABRICKS.value:
+            profiles_config["database_schema"] = self.target_schema
         else:
             profiles_config["schema"] = self.target_schema
         if destination_type.value == DestinationType.CLICKHOUSE.value:
