@@ -35,7 +35,7 @@ quoting:
   # Temporarily disabling the behavior of the ExtendedNameTransformer on table/schema names, see (issue #1785)
   # all schemas should be unquoted
   schema: false
-  identifier: true
+  identifier: false
 
 # You can define configurations for models in the `model-paths` directory here.
 # Using these configurations, you can enable or disable models, change how they
@@ -51,9 +51,14 @@ models:
       airbyte_incremental:
         +tags: incremental_tables
         +materialized: incremental
-        +on_schema_change: sync_all_columns
         +incremental_strategy: merge
+        # schema change test is supported automatically by the merge operation
+        # need to be run against a cluster with spark.databricks.delta.schema.autoMerge.enabled = True
+        # schema merge being handled at the final step, if a schema changes in one of the primary keys
+        # that coalesce differently to string, unicity will be broken
+        +on_schema_change: "ignore"
         +file_format: delta
+        +pre-hook: 'SET spark.databricks.delta.schema.autoMerge.enabled = True'
       airbyte_tables:
         +tags: normalized_tables
         +materialized: table
