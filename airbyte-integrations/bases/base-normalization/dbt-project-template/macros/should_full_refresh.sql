@@ -13,9 +13,7 @@
 {%- endmacro -%}
 
 {%- macro databricks__get_columns_in_relation_if_exist(target_table) -%}
-    {{ dbt_utils.log_info("Executing databricks get_columns_in_relation") }}
     {%- if target_table.schema is none -%}
-        {{ dbt_utils.log_info("Relation : " ~ target_table ~ " No schema found") }}
         {%- set found_table = True %}
     {%- else -%}
     {% call statement('list_table_infos', fetch_result=True) -%}
@@ -25,15 +23,12 @@
     {%- set found_table = [] %}
     {%- for table in existing_tables -%}
         {%- if table.tableName == target_table.identifier -%}
-            {{ dbt_utils.log_info("Relation : " ~ target_table ~ " Found existing table") }}
             {% do found_table.append(table.tableName) %}
         {%- endif -%}
     {%- endfor -%}
     {%- endif -%}
     {%- if found_table -%}
-        {{ dbt_utils.log_info("Relation : " ~ target_table ~ " retrieving columns in relation") }}
         {%- set cols = adapter.get_columns_in_relation(target_table) -%}
-        {{ dbt_utils.log_info("Relation : " ~ target_table ~ " cols: " ~ cols) }}
         {{ return(cols) }}
     {%- else -%}
         {{ return ([]) }}
@@ -46,10 +41,8 @@
     {%- endif -%}
     {%- set found_column = [] %}
     {%- set cols = get_columns_in_relation_if_exist(target_table) -%}
-    {{ dbt_utils.log_info("Retrieved columns : " ~ cols ~ "For table : " ~ target_table) }}
     {%- for col in cols -%}
         {%- if col.column == col_ab_id -%}
-            {{ dbt_utils.log_info("Found " ~ col_ab_id ~ " for table : " ~ target_table) }}
             {% do found_column.append(col.column) %}
         {%- endif -%}
     {%- endfor -%}
