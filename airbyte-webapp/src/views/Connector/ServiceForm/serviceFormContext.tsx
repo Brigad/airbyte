@@ -59,17 +59,17 @@ const ServiceFormContextProvider: React.FC<{
   const { hasFeature } = useFeatureService();
 
   const serviceType = values.serviceType;
-  const selectedService = useMemo(
-    () => availableServices.find((s) => Connector.id(s) === serviceType),
-    [availableServices, serviceType]
-  );
+  const selectedService = useMemo(() => availableServices.find((s) => Connector.id(s) === serviceType), [
+    availableServices,
+    serviceType,
+  ]);
 
   const isAuthFlowSelected = useMemo(
     () =>
       hasFeature(FeatureItem.AllowOAuthConnector) &&
       selectedConnector?.advancedAuth &&
       selectedConnector?.advancedAuth.predicateValue ===
-        getIn(getValues(values), makeConnectionConfigurationPath(selectedConnector?.advancedAuth.predicateKey)),
+        getIn(getValues(values), makeConnectionConfigurationPath(selectedConnector?.advancedAuth.predicateKey ?? [])),
     [selectedConnector, hasFeature, values, getValues]
   );
 

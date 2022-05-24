@@ -11,7 +11,6 @@ import LoadingSchema from "components/LoadingSchema";
 import ResetDataModal from "components/ResetDataModal";
 import { ModalTypes } from "components/ResetDataModal/types";
 
-import { ConnectionNamespaceDefinition } from "core/domain/connection";
 import {
   useConnectionLoad,
   useResetConnection,
@@ -21,10 +20,12 @@ import {
 import { equal } from "utils/objects";
 import ConnectionForm from "views/Connection/ConnectionForm";
 
-type IProps = {
+import { ConnectionStatus, NamespaceDefinitionType } from "../../../../../core/request/AirbyteClient";
+
+interface ReplicationViewProps {
   onAfterSaveSchema: () => void;
   connectionId: string;
-};
+}
 
 const Content = styled.div`
   max-width: 1279px;
@@ -48,12 +49,12 @@ const Note = styled.span`
   color: ${({ theme }) => theme.dangerColor};
 `;
 
-const ReplicationView: React.FC<IProps> = ({ onAfterSaveSchema, connectionId }) => {
+export const ReplicationView: React.FC<ReplicationViewProps> = ({ onAfterSaveSchema, connectionId }) => {
   const [isModalOpen, setIsUpdateModalOpen] = useState(false);
   const [activeUpdatingSchemaMode, setActiveUpdatingSchemaMode] = useState(false);
   const [saved, setSaved] = useState(false);
   const [currentValues, setCurrentValues] = useState<ValuesProps>({
-    namespaceDefinition: ConnectionNamespaceDefinition.Source,
+    namespaceDefinition: NamespaceDefinitionType.source,
     namespaceFormat: "",
     schedule: null,
     prefix: "",
@@ -67,10 +68,10 @@ const ReplicationView: React.FC<IProps> = ({ onAfterSaveSchema, connectionId }) 
 
   const { connection: initialConnection, refreshConnectionCatalog } = useConnectionLoad(connectionId);
 
-  const [{ value: connectionWithRefreshCatalog, loading: isRefreshingCatalog }, refreshCatalog] = useAsyncFn(
-    refreshConnectionCatalog,
-    [connectionId]
-  );
+  const [
+    { value: connectionWithRefreshCatalog, loading: isRefreshingCatalog },
+    refreshCatalog,
+  ] = useAsyncFn(refreshConnectionCatalog, [connectionId]);
 
   const connection = activeUpdatingSchemaMode ? connectionWithRefreshCatalog : initialConnection;
 
@@ -82,6 +83,7 @@ const ReplicationView: React.FC<IProps> = ({ onAfterSaveSchema, connectionId }) 
       connectionId,
       status: initialConnection.status || "",
       withRefreshedCatalog: activeUpdatingSchemaMode,
+      sourceCatalogId: connection?.catalogId,
     });
 
     setSaved(true);
@@ -143,7 +145,7 @@ const ReplicationView: React.FC<IProps> = ({ onAfterSaveSchema, connectionId }) 
       <Card>
         {!isRefreshingCatalog && connection ? (
           <ConnectionForm
-            isEditMode
+            mode={connection?.status !== ConnectionStatus.deprecated ? "edit" : "readonly"}
             connection={connection}
             onSubmit={onSubmitForm}
             onReset={onReset}
@@ -166,5 +168,3 @@ const ReplicationView: React.FC<IProps> = ({ onAfterSaveSchema, connectionId }) 
     </Content>
   );
 };
-
-export default ReplicationView;

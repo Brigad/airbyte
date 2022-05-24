@@ -5,10 +5,14 @@ import styled from "styled-components";
 import { ContentCard } from "components";
 import { ConnectorIcon } from "components/ConnectorIcon";
 import { ReleaseStageBadge } from "components/ReleaseStageBadge";
-import { Header, Row, Cell } from "components/SimpleTableComponents";
+import { Cell, Header, Row } from "components/SimpleTableComponents";
 
-import { Connection } from "core/domain/connection";
-import { DestinationDefinition, SourceDefinition } from "core/domain/connector";
+import {
+  ConnectionStatus,
+  DestinationDefinitionRead,
+  SourceDefinitionRead,
+  WebBackendConnectionRead,
+} from "core/request/AirbyteClient";
 
 import EnabledControl from "./EnabledControl";
 
@@ -33,15 +37,15 @@ const EnabledCell = styled(Cell)`
   margin-top: -18px;
 `;
 
-type IProps = {
-  connection: Connection;
+interface StatusMainInfoProps {
+  connection: WebBackendConnectionRead;
   frequencyText?: string;
-  destinationDefinition?: DestinationDefinition;
-  sourceDefinition?: SourceDefinition;
+  destinationDefinition?: DestinationDefinitionRead;
+  sourceDefinition?: SourceDefinitionRead;
   allowSync?: boolean;
-};
+}
 
-const StatusMainInfo: React.FC<IProps> = ({
+export const StatusMainInfo: React.FC<StatusMainInfoProps> = ({
   connection,
   frequencyText,
   destinationDefinition,
@@ -60,7 +64,7 @@ const StatusMainInfo: React.FC<IProps> = ({
         <Cell>
           <FormattedMessage id="tables.frequency" />
         </Cell>
-        <Cell flex={1.1}></Cell>
+        {connection.status !== ConnectionStatus.deprecated && <Cell flex={1.1}></Cell>}
       </Header>
       <Row>
         <SourceCell flex={2}>
@@ -74,12 +78,12 @@ const StatusMainInfo: React.FC<IProps> = ({
           <ReleaseStageBadge stage={destinationDefinition?.releaseStage} />
         </SourceCell>
         <Cell>{frequencyText}</Cell>
-        <EnabledCell flex={1.1}>
-          <EnabledControl disabled={!allowSync} connection={connection} frequencyText={frequencyText} />
-        </EnabledCell>
+        {connection.status !== ConnectionStatus.deprecated && (
+          <EnabledCell flex={1.1}>
+            <EnabledControl disabled={!allowSync} connection={connection} frequencyText={frequencyText} />
+          </EnabledCell>
+        )}
       </Row>
     </MainInfo>
   );
 };
-
-export default StatusMainInfo;

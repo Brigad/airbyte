@@ -4,8 +4,8 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useEffectOnce } from "react-use";
 
 import { useConfig } from "config";
-import { Workspace } from "core/domain/workspace/Workspace";
-import { TrackPageAnalytics, useAnalyticsIdentifyUser, useAnalyticsRegisterValues } from "hooks/services/Analytics";
+import { useAnalyticsIdentifyUser, useAnalyticsRegisterValues } from "hooks/services/Analytics";
+import { useTrackPageAnalytics } from "hooks/services/Analytics/useTrackPageAnalytics";
 import { useApiHealthPoll } from "hooks/services/Health";
 import { useNotificationService } from "hooks/services/Notification";
 import { OnboardingServiceProvider } from "hooks/services/Onboarding";
@@ -15,6 +15,7 @@ import { storeUtmFromQuery } from "utils/utmStorage";
 import { CompleteOauthRequest } from "views/CompleteOauthRequest";
 import MainView from "views/layout/MainView";
 
+import { WorkspaceRead } from "../core/request/AirbyteClient";
 import ConnectionPage from "./ConnectionPage";
 import DestinationPage from "./DestinationPage";
 import OnboardingPage from "./OnboardingPage";
@@ -40,7 +41,7 @@ function useDemo() {
   useNotificationService(config.isDemo ? demoNotification : undefined);
 }
 
-const useAddAnalyticsContextForWorkspace = (workspace: Workspace): void => {
+const useAddAnalyticsContextForWorkspace = (workspace: WorkspaceRead): void => {
   const analyticsContext = useMemo(
     () => ({
       workspace_id: workspace.workspaceId,
@@ -50,12 +51,12 @@ const useAddAnalyticsContextForWorkspace = (workspace: Workspace): void => {
   );
   useAnalyticsRegisterValues(analyticsContext);
   useAnalyticsIdentifyUser(workspace.workspaceId);
+  useTrackPageAnalytics();
 };
 
-const MainViewRoutes: React.FC<{ workspace: Workspace }> = ({ workspace }) => {
+const MainViewRoutes: React.FC<{ workspace: WorkspaceRead }> = ({ workspace }) => {
   return (
     <MainView>
-      <TrackPageAnalytics />
       <Routes>
         <Route path={`${RoutePaths.Destination}/*`} element={<DestinationPage />} />
         <Route path={`${RoutePaths.Source}/*`} element={<SourcesPage />} />
@@ -96,6 +97,7 @@ export const AutoSelectFirstWorkspace: React.FC<{ includePath?: boolean }> = ({ 
 const RoutingWithWorkspace: React.FC = () => {
   const workspace = useCurrentWorkspace();
   useAddAnalyticsContextForWorkspace(workspace);
+  useTrackPageAnalytics();
   useApiHealthPoll();
   useDemo();
 
