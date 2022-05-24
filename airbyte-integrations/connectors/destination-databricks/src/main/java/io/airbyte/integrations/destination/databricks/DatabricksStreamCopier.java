@@ -136,7 +136,6 @@ public class DatabricksStreamCopier extends S3StreamCopier {
         JavaBaseConstants.COLUMN_NAME_AB_ID,
         JavaBaseConstants.COLUMN_NAME_DATA,
         JavaBaseConstants.COLUMN_NAME_EMITTED_AT,
-        destTableLocation,
         streamName,
         destinationSyncMode.value(),
         String.join(", ", DatabricksConstants.DEFAULT_TBL_PROPERTIES));
