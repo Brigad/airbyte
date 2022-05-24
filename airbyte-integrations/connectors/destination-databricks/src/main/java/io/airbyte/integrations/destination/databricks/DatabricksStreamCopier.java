@@ -129,8 +129,6 @@ public class DatabricksStreamCopier extends S3StreamCopier {
 
     final String createTable = String.format(
         "%s %s.%s (%s STRING, %s STRING, %s TIMESTAMP) " +
-            "USING delta " +
-            "LOCATION '%s' " +
             "COMMENT 'Created from stream %s' " +
             "TBLPROPERTIES ('airbyte.destinationSyncMode' = '%s', %s) ",
         createStatement,
