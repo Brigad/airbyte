@@ -42,7 +42,7 @@ public class DatabricksSqlOperations extends JdbcSqlOperations {
 
   @Override
   public void dropTableIfExists(final JdbcDatabase database, final String schemaName, final String tableName) throws SQLException {
-    database.execute(String.format("DROP TABLE IF NOT EXISTS %s.%s;", schemaName, tableName));
+    database.execute(String.format("DROP TABLE IF EXISTS %s.%s;", schemaName, tableName));
   }
 
 
