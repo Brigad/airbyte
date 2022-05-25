@@ -8,6 +8,8 @@ import io.airbyte.db.jdbc.JdbcDatabase;
 import io.airbyte.integrations.base.JavaBaseConstants;
 import io.airbyte.integrations.destination.jdbc.JdbcSqlOperations;
 import io.airbyte.protocol.models.AirbyteRecordMessage;
+
+import java.sql.SQLException;
 import java.util.List;
 
 public class DatabricksSqlOperations extends JdbcSqlOperations {
@@ -38,10 +40,15 @@ public class DatabricksSqlOperations extends JdbcSqlOperations {
     return String.format("COPY INTO %s.%s FROM (SELECT * FROM %s.%s)", schemaName, dstTableName, schemaName, srcTableName);
   }
 
+  @Override
+  public void dropTableIfExists(final JdbcDatabase database, final String schemaName, final String tableName) throws SQLException {
+    database.execute(String.format("DROP TABLE IF NOT EXISTS %s.%s;", schemaName, tableName));
+  }
+
 
   @Override
   public void createSchemaIfNotExists(final JdbcDatabase database, final String schemaName) throws Exception {
-    database.execute(String.format("create database if not exists %s;", schemaName));
+    database.execute(String.format("CREATE DATABASE IF NOT EXISTS %s;", schemaName));
   }
 
   @Override
