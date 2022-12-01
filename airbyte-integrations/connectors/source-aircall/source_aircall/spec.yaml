@@ -1,0 +1,44 @@
+documentationUrl: https://docs.airbyte.com/integrations/sources/aircall
+connectionSpecification:
+  $schema: http://json-schema.org/draft-07/schema#
+  title: Aircall Spec
+  type: object
+  required:
+    - api_id
+    - api_token
+    - start_date
+  properties:
+    # 'TODO: This schema defines the configuration required for the source. This usually involves metadata such as database and/or authentication information.':
+    api_id:
+      type: string
+      description: The api id from Aircall (See the <a href=\"https://developer.aircall.io/api-references/#basic-auth-aircall-customers\">doc</a> for more information on how to obtain this key.)
+    api_token:
+      type: string
+      airbyte_secret: true
+      description: The api token from Aircall (See the <a href=\"https://developer.aircall.io/api-references/#basic-auth-aircall-customers\">doc</a> for more information on how to obtain this key.)
+    start_date:
+      type: string
+      title: Replication Start Date
+      pattern: ^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$
+      description: UTC date and time in the format 2021-01-25T00:00:00Z. Any data before this date will not be replicated
+      examples:
+        - "2018-07-15T18:00:00Z"
+    time_window:
+      type: object
+      description: Time window to fetch results (default 1 month)
+      properties:
+        months:
+          type: integer
+          order: 2
+        years:
+          type: integer
+          order: 1
+        days:
+          type: integer
+          order: 3
+        minutes:
+          type: integer
+          order: 4
+        seconds:
+          type: integer
+          order: 5
