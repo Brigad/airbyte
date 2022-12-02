@@ -147,30 +147,42 @@ class Company(AircallStream):
 
 # Basic incremental stream
 class IncrementalAircallStream(AircallStream, IncrementalMixin):
-    """
-    TODO fill in details of this class to implement functionality related to incremental syncs for your connector.
-         if you do not need to implement incremental sync for any streams, remove this class.
-    """
+    incremental_threshold = 0
 
-    def __init__(self, start_date: str, time_window: Mapping[str, int], *args, **kwargs) -> None:
+    def __init__(self, start_date: str, time_window: Mapping[str, int], incremental_threshold: int = 0, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._cursor_value = pendulum.parse(start_date).int_timestamp
         self.time_window = time_window
+        self.incremental_threshold = incremental_threshold
 
     @property
     @abstractmethod
     def cursor_field(self) -> str:
         pass
     
+    def _update_state(self, latest_cursor):
+        if latest_cursor:
+            new_state = max(latest_cursor, self._cursor_value) if self._cursor_value else latest_cursor
+            if new_state != self._cursor_value:
+                self.logger.info(f"Advancing bookmark for {self.name} stream from {pendulum.from_timestamp(self._cursor_value).to_iso8601_string()} to {pendulum.from_timestamp(latest_cursor).to_iso8601_string()}")
+                self._cursor_value = new_state
+
     @property
     def state(self) -> MutableMapping[str, Any]:
-        self.logger.info(f"Getting state: {self._cursor_value}")
         return {self.cursor_field: self._cursor_value}
 
     @state.setter
     def state(self, value: MutableMapping[str, Any]):
-        self.logger.info(f"Setting state: {value[self.cursor_field]}")
-        self._cursor_value = value[self.cursor_field]
+        self._cursor_value = value.get(self.cursor_field, self._cursor_value)
+    
+    def read_records(self, stream_slice: Mapping[str, any], *args, **kwargs) -> Iterable[Mapping[str, Any]]:
+        records = super().read_records(stream_slice=stream_slice, *args, **kwargs)
+        latest_cursor = None
+        for record in records:
+            cursor = record[self.cursor_field]
+            latest_cursor = max(cursor, latest_cursor) if latest_cursor else cursor
+            yield record
+        self._update_state(latest_cursor=latest_cursor if latest_cursor else stream_slice["to"])
 
 class Calls(IncrementalAircallStream):
     cursor_field = "started_at"
@@ -202,15 +214,15 @@ class Calls(IncrementalAircallStream):
             pendulum.from_timestamp(stream_state.get(self.cursor_field)) - pendulum.duration(hours=2) if stream_state else pendulum.from_timestamp(self._cursor_value)
         )
         end = pendulum.now()
+        slices_number = 0
         while start < end:
             next = self._get_end_date(start, pendulum.now())
             slice = {"from": start.int_timestamp, "to": next.int_timestamp}
             start = next
-            self.logger.info(
-                f"Getting data for {pendulum.from_timestamp(slice['from']).to_iso8601_string()} to {pendulum.from_timestamp(slice['to']).to_iso8601_string()}"
-            )
-            slices.append(slice)
-
+            yield slice
+            slices_number += 1
+            if slices_number >= self.incremental_threshold:
+                return slices
         return slices
 
 
@@ -245,4 +257,4 @@ class SourceAircall(AbstractSource):
         :param config: A Mapping of the user input configuration as defined in the connector spec.
         """
         auth = auth = self._getAuth(config)
-        return [Calls(authenticator=auth, start_date=config["start_date"], time_window=config["time_window"])]
+        return [Calls(authenticator=auth, start_date=config["start_date"], time_window=config["time_window"],incremental_threshold=config.get("incremental_threshold", 0))]

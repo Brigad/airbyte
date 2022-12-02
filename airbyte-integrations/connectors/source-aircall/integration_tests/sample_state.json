@@ -1,8 +1,10 @@
-{
-  "type": "STREAM",
-  "stream": {
-    "stream_descriptor": { "name": "calls" },
-    "stream_state": { "started_at": 1654627306 }
-  },
-  "data": { "calls": { "started_at": 1654627306 } }
-}
+[
+  {
+    "type": "STREAM",
+    "stream": {
+      "stream_descriptor": { "name": "calls" },
+      "stream_state": { "started_at": 1654627306 }
+    },
+    "data": { "calls": { "started_at": 1654627306 } }
+  }
+]

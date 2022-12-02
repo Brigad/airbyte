@@ -15,7 +15,7 @@
       "type": ["null", "string"]
     },
     "missed_call_reason": {
-      "type": "null"
+      "type": ["string", "null"]
     },
     "started_at": {
       "type": ["null", "integer"]
@@ -33,13 +33,13 @@
       "type": ["null", "integer"]
     },
     "voicemail": {
-      "type": "null"
+      "type": ["string", "null"]
     },
     "recording": {
-      "type": "null"
+      "type": ["string", "null"]
     },
     "asset": {
-      "type": "null"
+      "type": ["string", "null"]
     },
     "raw_digits": {
       "type": ["null", "string"]
@@ -77,19 +77,169 @@
       }
     },
     "contact": {
-      "type": "null"
+      "type": ["null", "object"],
+      "properties": {
+        "id": {
+          "type": ["null", "integer"]
+        },
+        "direct_link": {
+          "type": ["null", "string"]
+        },
+        "first_name": {
+          "type": ["null", "string"]
+        },
+        "last_name": {
+          "type": ["null", "string"]
+        },
+        "company_name": {
+          "type": ["null", "string"]
+        },
+        "information": {
+          "type": ["null", "string"]
+        },
+        "is_shared": {
+          "type": "boolean"
+        },
+        "created_at": {
+          "type": ["null", "integer"]
+        },
+        "updated_at": {
+          "type": ["null", "integer"]
+        },
+        "emails": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": ["null", "integer"]
+              },
+              "label": {
+                "type": ["null", "string"]
+              },
+              "value": {
+                "type": ["null", "string"]
+              }
+            }
+          }
+        },
+        "phone_numbers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": ["null", "integer"]
+              },
+              "label": {
+                "type": ["null", "string"]
+              },
+              "value": {
+                "type": ["null", "string"]
+              }
+            }
+          }
+        }
+      }
     },
     "archived": {
       "type": "boolean"
     },
     "assigned_to": {
-      "type": "null"
+      "type": ["null", "object"],
+      "properties": {
+        "id": {
+          "type": ["null", "integer"]
+        },
+        "direct_link": {
+          "type": ["null", "string"]
+        },
+        "name": {
+          "type": ["null", "string"]
+        },
+        "email": {
+          "type": ["null", "string"]
+        },
+        "available": {
+          "type": "boolean"
+        },
+        "availability_status": {
+          "type": ["null", "string"]
+        },
+        "created_at": {
+          "type": ["null", "string"]
+        },
+        "time_zone": {
+          "type": ["null", "string"]
+        },
+        "language": {
+          "type": ["null", "string"]
+        }
+      }
     },
     "transferred_by": {
-      "type": "null"
+      "type": ["null", "object"],
+      "properties": {
+        "id": {
+          "type": ["null", "integer"]
+        },
+        "direct_link": {
+          "type": ["null", "string"]
+        },
+        "name": {
+          "type": ["null", "string"]
+        },
+        "email": {
+          "type": ["null", "string"]
+        },
+        "available": {
+          "type": "boolean"
+        },
+        "availability_status": {
+          "type": ["null", "string"]
+        },
+        "created_at": {
+          "type": ["null", "string"]
+        },
+        "time_zone": {
+          "type": ["null", "string"]
+        },
+        "language": {
+          "type": ["null", "string"]
+        }
+      }
     },
     "transferred_to": {
-      "type": "null"
+      "type": ["null", "object"],
+      "properties": {
+        "id": {
+          "type": ["null", "integer"]
+        },
+        "direct_link": {
+          "type": ["null", "string"]
+        },
+        "name": {
+          "type": ["null", "string"]
+        },
+        "email": {
+          "type": ["null", "string"]
+        },
+        "available": {
+          "type": "boolean"
+        },
+        "availability_status": {
+          "type": ["null", "string"]
+        },
+        "created_at": {
+          "type": ["null", "string"]
+        },
+        "time_zone": {
+          "type": ["null", "string"]
+        },
+        "language": {
+          "type": ["null", "string"]
+        }
+      }
     },
     "cost": {
       "type": ["null", "string"]
@@ -140,93 +290,89 @@
     },
     "comments": {
       "type": "array",
-      "items": [
-        {
-          "type": "object",
-          "properties": {
-            "id": {
-              "type": ["null", "integer"]
-            },
-            "content": {
-              "type": ["null", "string"]
-            },
-            "posted_at": {
-              "type": ["null", "integer"]
-            },
-            "posted_by": {
-              "type": ["null", "object"],
-              "properties": {
-                "id": {
-                  "type": ["null", "integer"]
-                },
-                "direct_link": {
-                  "type": ["null", "string"]
-                },
-                "name": {
-                  "type": ["null", "string"]
-                },
-                "email": {
-                  "type": ["null", "string"]
-                },
-                "available": {
-                  "type": "boolean"
-                },
-                "availability_status": {
-                  "type": ["null", "string"]
-                },
-                "created_at": {
-                  "type": ["null", "string"]
-                }
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": ["null", "integer"]
+          },
+          "content": {
+            "type": ["null", "string"]
+          },
+          "posted_at": {
+            "type": ["null", "integer"]
+          },
+          "posted_by": {
+            "type": ["null", "object"],
+            "properties": {
+              "id": {
+                "type": ["null", "integer"]
+              },
+              "direct_link": {
+                "type": ["null", "string"]
+              },
+              "name": {
+                "type": ["null", "string"]
+              },
+              "email": {
+                "type": ["null", "string"]
+              },
+              "available": {
+                "type": "boolean"
+              },
+              "availability_status": {
+                "type": ["null", "string"]
+              },
+              "created_at": {
+                "type": ["null", "string"]
               }
             }
           }
         }
-      ]
+      }
     },
     "tags": {
       "type": "array",
-      "items": [
-        {
-          "type": "object",
-          "properties": {
-            "id": {
-              "type": ["null", "integer"]
-            },
-            "name": {
-              "type": ["null", "string"]
-            },
-            "created_at": {
-              "type": ["null", "integer"]
-            },
-            "tagged_by": {
-              "type": ["null", "object"],
-              "properties": {
-                "id": {
-                  "type": ["null", "integer"]
-                },
-                "direct_link": {
-                  "type": ["null", "string"]
-                },
-                "name": {
-                  "type": ["null", "string"]
-                },
-                "email": {
-                  "type": ["null", "string"]
-                },
-                "available": {
-                  "type": "boolean"
-                },
-                "availability_status": {
-                  "type": ["null", "string"]
-                },
-                "created_at": {
-                  "type": ["null", "string"]
-                }
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": ["null", "integer"]
+          },
+          "name": {
+            "type": ["null", "string"]
+          },
+          "created_at": {
+            "type": ["null", "integer"]
+          },
+          "tagged_by": {
+            "type": ["null", "object"],
+            "properties": {
+              "id": {
+                "type": ["null", "integer"]
+              },
+              "direct_link": {
+                "type": ["null", "string"]
+              },
+              "name": {
+                "type": ["null", "string"]
+              },
+              "email": {
+                "type": ["null", "string"]
+              },
+              "available": {
+                "type": "boolean"
+              },
+              "availability_status": {
+                "type": ["null", "string"]
+              },
+              "created_at": {
+                "type": ["null", "string"]
               }
             }
           }
         }
-      ]
+      }
     },
     "teams": {
       "type": "array",

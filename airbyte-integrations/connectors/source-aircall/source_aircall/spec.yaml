@@ -42,3 +42,6 @@ connectionSpecification:
         seconds:
           type: integer
           order: 5
+    incremental_threshold:
+      type: integer
+      description: number of time window slices to sync at once max (allows to checkpoint ingestion. Default 0, which means no threshold)
