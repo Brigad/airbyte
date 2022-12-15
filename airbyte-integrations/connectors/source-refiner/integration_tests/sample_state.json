@@ -1,0 +1,10 @@
+[
+  {
+    "type": "STREAM",
+    "stream": {
+      "stream_descriptor": { "name": "responses" },
+      "stream_state": { "started_at": "2022-12-01" }
+    },
+    "data": { "responses": { "started_at": "2022-12-01" } }
+  }
+]

@@ -1,0 +1,78 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "uuid": {
+      "type": ["string", "null"]
+    },
+    "first_shown_at": {
+      "type": ["string", "null"]
+    },
+    "last_shown_at": {
+      "type": ["string", "null"]
+    },
+    "first_data_reception_at": {
+      "type": ["string", "null"]
+    },
+    "last_data_reception_at": {
+      "type": ["string", "null"]
+    },
+    "completed_at": {
+      "type": ["string", "null"]
+    },
+    "received_at": {
+      "type": ["string", "null"]
+    },
+    "dismissed_at": {
+      "type": ["string", "null"]
+    },
+    "form": {
+      "type": "object",
+      "properties": {
+        "uuid": {
+          "type": ["string", "null"]
+        },
+        "name": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "data": {
+      "type": "object"
+    },
+    "contact": {
+      "type": "object",
+      "properties": {
+        "uuid": {
+          "type": ["string", "null"]
+        },
+        "remote_id": {
+          "type": ["string", "null"]
+        },
+        "email": {
+          "type": ["string", "null"]
+        },
+        "display_name": {
+          "type": ["string", "null"]
+        },
+        "account": {
+          "type": "object",
+          "properties": {
+            "uuid": {
+              "type": ["string", "null"]
+            },
+            "remote_id": {
+              "type": ["string", "null"]
+            },
+            "display_name": {
+              "type": ["string", "null"]
+            },
+            "domain": {
+              "type": ["string", "null"]
+            }
+          }
+        }
+      }
+    }
+  }
+}
