@@ -192,7 +192,6 @@ public class DatabricksAzureBlobStorageStreamCopier extends DatabricksStreamCopi
     } else {
       queries.append(sqlOperations.copyTableQuery(database, schemaName, tmpTableName, destTableName));
     }
-    queries.append(sqlOperations.insertTableQuery(database, schemaName, tmpTableName, destTableName));
 
     return queries.toString();
   }
