@@ -175,7 +175,11 @@ public class DatabricksAzureBlobStorageStreamCopier extends DatabricksStreamCopi
       queries.append(sqlOperations.truncateTableQuery(database, schemaName, destTableName));
       LOGGER.info("Destination OVERWRITE mode detected. Dest table: {}, schema: {}, truncated.", destTableName, schemaName);
     }
-    queries.append(sqlOperations.copyTableQuery(database, schemaName, tmpTableName, destTableName));
+    if (!useMetastore) {
+        queries.append(sqlOperations.insertTableQuery(database, String.format("%s.%s", catalogName, schemaName), tmpTableName, destTableName));
+    } else {
+      queries.append(sqlOperations.insertTableQuery(database, schemaName, tmpTableName, destTableName));
+    }
 
     return queries.toString();
   }
