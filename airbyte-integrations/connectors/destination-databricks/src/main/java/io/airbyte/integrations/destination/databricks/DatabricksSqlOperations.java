@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2022 Airbyte, Inc., all rights reserved.
+ * Copyright (c) 2023 Airbyte, Inc., all rights reserved.
  */
 
 package io.airbyte.integrations.destination.databricks;
@@ -7,7 +7,7 @@ package io.airbyte.integrations.destination.databricks;
 import io.airbyte.db.jdbc.JdbcDatabase;
 import io.airbyte.integrations.base.JavaBaseConstants;
 import io.airbyte.integrations.destination.jdbc.JdbcSqlOperations;
-import io.airbyte.protocol.models.AirbyteRecordMessage;
+import io.airbyte.protocol.models.v0.AirbyteRecordMessage;
 import java.util.List;
 
 public class DatabricksSqlOperations extends JdbcSqlOperations {
@@ -36,6 +36,10 @@ public class DatabricksSqlOperations extends JdbcSqlOperations {
         JavaBaseConstants.COLUMN_NAME_AB_ID,
         JavaBaseConstants.COLUMN_NAME_DATA,
         JavaBaseConstants.COLUMN_NAME_EMITTED_AT);
+  }
+
+  public void createCatalogIfNotExists(final JdbcDatabase database, final String catalogName) throws Exception {
+    database.execute(String.format("create catalog if not exists %s;", catalogName));
   }
 
   @Override
