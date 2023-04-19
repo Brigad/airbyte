@@ -207,6 +207,7 @@ class Stream(HttpStream, ABC):
     denormalize_records: bool = False  # one record from API response can result in multiple records emitted
     granted_scopes: Set = None
     properties_scopes: Set = None
+    properties_history: bool = False
 
     @property
     @abstractmethod
@@ -256,6 +257,8 @@ class Stream(HttpStream, ABC):
         creds_title = self._credentials["credentials_title"]
         if creds_title in (OAUTH_CREDENTIALS, PRIVATE_APP_CREDENTIALS):
             self._authenticator = api.get_authenticator()
+        if self.properties_history:
+            self.limit = 50
 
     def backoff_time(self, response: requests.Response) -> Optional[float]:
         if response.status_code == codes.too_many_requests:
@@ -286,6 +289,7 @@ class Stream(HttpStream, ABC):
         request_params = self.request_params(stream_state=stream_state, stream_slice=stream_slice, next_page_token=next_page_token)
         if properties:
             request_params.update(properties.as_url_param())
+            request_params.update(properties.as_history_url_param())
 
         request = self._create_prepared_request(
             path=self.path(stream_state=stream_state, stream_slice=stream_slice, next_page_token=next_page_token),
@@ -327,7 +331,7 @@ class Stream(HttpStream, ABC):
         response = None
 
         properties = self._property_wrapper
-        for chunk in properties.split():
+        for chunk in properties.split(self.properties_history):
             response = self.handle_request(
                 stream_slice=stream_slice, stream_state=stream_state, next_page_token=next_page_token, properties=chunk
             )
@@ -349,15 +353,16 @@ class Stream(HttpStream, ABC):
         next_page_token = None
         try:
             while not pagination_complete:
-
                 properties = self._property_wrapper
-                if properties and properties.too_many_properties:
+                if properties and properties.too_many_properties(self.properties_history):
+                    self.logger.info("Too many records, spliting")
                     records, response = self._read_stream_records(
                         stream_slice=stream_slice,
                         stream_state=stream_state,
                         next_page_token=next_page_token,
                     )
                 else:
+                    print("Not Too many records requesting whole")
                     response = self.handle_request(
                         stream_slice=stream_slice,
                         stream_state=stream_state,
@@ -1158,6 +1163,7 @@ class Deals(CRMSearchStream):
     associations = ["contacts", "companies", "line_items"]
     primary_key = "id"
     scopes = {"contacts", "crm.objects.deals.read"}
+    properties_history = True
 
 
 class DealPipelines(Stream):
@@ -1486,6 +1492,7 @@ class Companies(CRMSearchStream):
     associations = ["contacts"]
     primary_key = "id"
     scopes = {"crm.objects.contacts.read", "crm.objects.companies.read"}
+    properties_history = True
 
 
 class Contacts(CRMSearchStream):

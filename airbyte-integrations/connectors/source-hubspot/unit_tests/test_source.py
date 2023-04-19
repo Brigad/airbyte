@@ -192,7 +192,7 @@ class TestSplittingPropertiesFunctionality:
         """
         test_stream = Companies(**common_params)
 
-        parsed_properties = list(APIv3Property(fake_properties_list).split())
+        parsed_properties = list(APIv3Property(fake_properties_list).split(True))
         self.set_mock_properties(requests_mock, "/properties/v2/company/properties", fake_properties_list)
 
         record_ids_paginated = [list(map(str, range(100))), list(map(str, range(100, 150, 1)))]
@@ -219,7 +219,7 @@ class TestSplittingPropertiesFunctionality:
                 prop_key, prop_val = next(iter(property_slice.as_url_param().items()))
                 requests_mock.register_uri(
                     "GET",
-                    f"{test_stream_url}?limit=100&{prop_key}={prop_val}{f'&after={after_id}' if after_id else ''}",
+                    f"{test_stream_url}?limit=50&{prop_key}={prop_val}{f'&after={after_id}' if after_id else ''}",
                     record_responses,
                 )
             after_id = id_list[-1]
@@ -269,7 +269,7 @@ class TestSplittingPropertiesFunctionality:
         Check working stream `workflows` with large list of properties using new functionality with splitting properties
         """
 
-        parsed_properties = list(APIv3Property(fake_properties_list).split())
+        parsed_properties = list(APIv3Property(fake_properties_list).split(True))
         self.set_mock_properties(requests_mock, "/properties/v2/deal/properties", fake_properties_list)
 
         test_stream = Deals(**common_params)
