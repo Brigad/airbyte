@@ -38,6 +38,10 @@ class GroupByKey(IRecordPostProcessor):
         if stored_props:
             stored_props.update(record.get("properties", {}))
             self._storage[record_pk]["properties"] = stored_props
+        history_stored_props = self._storage[record_pk].get("propertiesWithHistory")
+        if history_stored_props:
+            history_stored_props.update(record.get("propertiesWithHistory", {}))
+            self._storage[record_pk]["propertiesWithHistory"] = history_stored_props
 
     @property
     def flat(self):
@@ -94,7 +98,7 @@ class IURLPropertyRepresentation(abc.ABC):
                 )
             if current_property_length + summary_length >= self.PROPERTIES_PARAM_MAX_LENGTH:
                 total = current_property_length + summary_length
-                self.logger.info(f"Reached {total} > {self.PROPERTIES_PARAM_MAX_LENGTH}, splitting")
+                #self.logger.info(f"Reached {total} > {self.PROPERTIES_PARAM_MAX_LENGTH}, splitting")
                 yield type(self)(local_properties)
                 local_properties = []
                 summary_length = 500 if history else 0
