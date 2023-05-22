@@ -3,12 +3,14 @@
 #
 
 
+import json
 from typing import Dict
 
 import pygsheets
 from airbyte_cdk import AirbyteLogger
 from google.auth.transport.requests import Request
 from google.oauth2 import credentials as client_account
+from google.oauth2 import service_account
 from pygsheets.client import Client as pygsheets_client
 
 # the list of required scopes/permissions
@@ -29,7 +31,13 @@ class GoogleSheetsClient:
 
     def authorize(self) -> pygsheets_client:
         input_creds = self.config.get("credentials")
-        auth_creds = client_account.Credentials.from_authorized_user_info(info=input_creds)
+        auth_type = input_creds.pop("auth_type")
+        if auth_type == "Service":
+            auth_creds = service_account.Credentials.from_service_account_info(
+                json.loads(input_creds["service_account_info"]), scopes=SCOPES
+            )
+        elif auth_type == "Client":
+            auth_creds = client_account.Credentials.from_authorized_user_info(info=input_creds)
         client = pygsheets.authorize(custom_credentials=auth_creds)
 
         # Increase max number of retries if Rate Limit is reached. Error: <HttpError 429>
