@@ -6,6 +6,7 @@
     - postgres: unnest() -> https://www.postgresqltutorial.com/postgresql-array/
     - MSSQL: openjson() –> https://docs.microsoft.com/en-us/sql/relational-databases/json/validate-query-and-change-json-data-with-built-in-functions-sql-server?view=sql-server-ver15
     - ClickHouse: ARRAY JOIN –> https://clickhouse.com/docs/zh/sql-reference/statements/select/array-join/
+    - Databricks: LATERAL VIEW -> https://docs.databricks.com/spark/latest/spark-sql/language-manual/sql-ref-syntax-qry-select-lateral-view.html
 #}
 
 {# cross_join_unnest -------------------------------------------------     #}
@@ -56,6 +57,10 @@
 
 {% macro snowflake__cross_join_unnest(stream_name, array_col) -%}
     cross join table(flatten({{ array_col }})) as {{ array_col }}
+{%- endmacro %}
+
+{% macro databricks__cross_join_unnest(stream_name, array_col) -%}
+    lateral view outer explode(from_json({{ array_col }}, 'array<string>')) as _airbyte_nested_data
 {%- endmacro %}
 
 {% macro sqlserver__cross_join_unnest(stream_name, array_col) -%}
@@ -112,6 +117,10 @@
     {{ column_col }}.value
 {%- endmacro %}
 
+{% macro databricks__unnested_column_value(column_col) -%}
+    _airbyte_nested_data
+{%- endmacro %}
+
 {# unnest_cte -------------------------------------------------     #}
 
 {% macro unnest_cte(from_table, stream_name, column_col) -%}
@@ -121,47 +130,13 @@
 {% macro default__unnest_cte(from_table, stream_name, column_col) -%}{%- endmacro %}
 
 {% macro redshift__unnest_cte(from_table, stream_name, column_col) -%}
-
     {# -- based on https://docs.aws.amazon.com/redshift/latest/dg/query-super.html #}
-    {% if redshift_super_type() -%}
-        with joined as (
-            select
-                table_alias._airbyte_{{ stream_name }}_hashid as _airbyte_hashid,
-                _airbyte_nested_data
-            from {{ from_table }} as table_alias, table_alias.{{ column_col }} as _airbyte_nested_data
-        )
-    {%- else -%}
-
-    {# -- based on https://blog.getdbt.com/how-to-unnest-arrays-in-redshift/ #}
-    {%- if not execute -%}
-        {{ return('') }}
-    {% endif %}
-    {%- call statement('max_json_array_length', fetch_result=True) -%}
-        with max_value as (
-            select max(json_array_length({{ column_col }}, true)) as max_number_of_items
-            from {{ from_table }}
-        )
+    with joined as (
         select
-            case when max_number_of_items is not null and max_number_of_items > 1
-            then max_number_of_items
-            else 1 end as max_number_of_items
-        from max_value
-    {%- endcall -%}
-    {%- set max_length = load_result('max_json_array_length') -%}
-with numbers as (
-    {{dbt_utils.generate_series(max_length["data"][0][0])}}
-),
-joined as (
-    select
-        _airbyte_{{ stream_name }}_hashid as _airbyte_hashid,
-        json_extract_array_element_text({{ column_col }}, numbers.generated_number::int - 1, true) as _airbyte_nested_data
-    from {{ from_table }}
-    cross join numbers
-    -- only generate the number of records in the cross join that corresponds
-    -- to the number of items in {{ from_table }}.{{ column_col }}
-    where numbers.generated_number <= json_array_length({{ column_col }}, true)
-)
-    {%- endif %}
+            table_alias._airbyte_{{ stream_name }}_hashid as _airbyte_hashid,
+            _airbyte_nested_data
+        from {{ from_table }} as table_alias, table_alias.{{ column_col }} as _airbyte_nested_data
+    )
 {%- endmacro %}
 
 {% macro mysql__unnest_cte(from_table, stream_name, column_col) -%}

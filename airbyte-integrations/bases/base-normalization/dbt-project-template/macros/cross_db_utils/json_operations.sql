@@ -8,6 +8,7 @@
     - ClickHouse: JSONExtractString(json_doc, 'path' [, 'path'] ...) -> https://clickhouse.com/docs/en/sql-reference/functions/json-functions/
     - TiDB: JSON_EXTRACT(json_doc, 'path' [, 'path'] ...) -> https://docs.pingcap.com/tidb/stable/json-functions
     - DuckDB: json_extract(json, 'path') note: If path is a LIST, the result will be a LIST of JSON -> https://duckdb.org/docs/extensions/json
+    - Databricks: get_json_object(json_txt, 'path') -> https://spark.apache.org/docs/latest/api/sql/#get_json_object
 #}
 
 {# format_json_path --------------------------------------------------     #}
@@ -66,7 +67,7 @@
 {%- endmacro %}
 
 {% macro redshift__format_json_path(json_path_list) -%}
-    {%- set quote = '"' if redshift_super_type() else "'" -%}
+    {%- set quote = '"' -%}
     {%- set str_list = [] -%}
     {%- for json_path in json_path_list -%}
         {%- if str_list.append(json_path.replace(quote, quote + quote)) -%} {%- endif -%}
@@ -107,6 +108,15 @@
 {% macro duckdb__format_json_path(json_path_list) -%}
     {# -- '$."x"."y"."z"' #}
     {{ "'$.\"" ~ json_path_list|join(".") ~ "\"'" }}
+{%- endmacro %}
+
+{% macro databricks__format_json_path(json_path_list) -%}
+    {# -- '$.x.y.z' #}
+    {%- set str_list = [] -%}
+    {%- for json_path in json_path_list -%}
+        {%- if str_list.append(json_path.replace("'", "\\'")) -%} {%- endif -%}
+    {%- endfor -%}
+    {{ "'$." ~ str_list|join(".") ~ "'" }}
 {%- endmacro %}
 
 {# json_extract -------------------------------------------------     #}
@@ -151,11 +161,7 @@
     {%- if from_table|string() != '' -%}
     {%- set json_column = from_table|string() + "." + json_column|string() -%}
     {%- endif -%}
-    {%- if redshift_super_type() -%}
-        case when {{ json_column }}.{{ format_json_path(json_path_list) }} != '' then {{ json_column }}.{{ format_json_path(json_path_list) }} end
-    {%- else -%}
-        case when json_extract_path_text({{ json_column }}, {{ format_json_path(json_path_list) }}, true) != '' then json_extract_path_text({{ json_column }}, {{ format_json_path(json_path_list) }}, true) end
-    {%- endif -%}
+    case when {{ json_column }}.{{ format_json_path(json_path_list) }} != '' then {{ json_column }}.{{ format_json_path(json_path_list) }} end
 {%- endmacro %}
 
 {% macro snowflake__json_extract(from_table, json_column, json_path_list, normalized_json_path) -%}
@@ -194,6 +200,14 @@
     {% endif -%}
 {%- endmacro %}
 
+{% macro databricks__json_extract(from_table, json_column, json_path_list, normalized_json_path) -%}
+    {%- if from_table|string() == '' %}
+        get_json_object({{ json_column }}, {{ format_json_path(json_path_list) }})
+    {% else %}
+        get_json_object({{ from_table }}.{{ json_column }}, {{ format_json_path(json_path_list) }})
+    {% endif -%}
+{%- endmacro %}
+
 {# json_extract_scalar -------------------------------------------------     #}
 
 {% macro json_extract_scalar(json_column, json_path_list, normalized_json_path) -%}
@@ -221,11 +235,7 @@
 {%- endmacro %}
 
 {% macro redshift__json_extract_scalar(json_column, json_path_list, normalized_json_path) -%}
-    {%- if redshift_super_type() -%}
     case when {{ json_column }}.{{ format_json_path(json_path_list) }} != '' then {{ json_column }}.{{ format_json_path(json_path_list) }} end
-    {%- else -%}
-    case when json_extract_path_text({{ json_column }}, {{ format_json_path(json_path_list) }}, true) != '' then json_extract_path_text({{ json_column }}, {{ format_json_path(json_path_list) }}, true) end
-    {%- endif -%}
 {%- endmacro %}
 
 {% macro snowflake__json_extract_scalar(json_column, json_path_list, normalized_json_path) -%}
@@ -250,6 +260,10 @@
 
 {% macro duckdb__json_extract_scalar(json_column, json_path_list, normalized_json_path) -%}
     json_extract_string({{ json_column }}, {{ format_json_path(json_path_list) }})
+{%- endmacro %}
+
+{% macro databricks__json_extract_scalar(json_column, json_path_list, normalized_json_path) -%}
+    get_json_object({{ json_column }}, {{ format_json_path(json_path_list) }})
 {%- endmacro %}
 
 {# json_extract_array -------------------------------------------------     #}
@@ -279,11 +293,7 @@
 {%- endmacro %}
 
 {% macro redshift__json_extract_array(json_column, json_path_list, normalized_json_path) -%}
-    {%- if redshift_super_type() -%}
     {{ json_column }}.{{ format_json_path(json_path_list) }}
-    {%- else -%}
-    json_extract_path_text({{ json_column }}, {{ format_json_path(json_path_list) }}, true)
-    {%- endif -%}
 {%- endmacro %}
 
 {% macro snowflake__json_extract_array(json_column, json_path_list, normalized_json_path) -%}
@@ -304,6 +314,10 @@
 
 {% macro duckdb__json_extract_array(json_column, json_path_list, normalized_json_path) -%}
     json_extract({{ json_column }}, {{ format_json_path(normalized_json_path) }})
+{%- endmacro %}
+
+{% macro databricks__json_extract_array(json_column, json_path_list, normalized_json_path) -%}
+    get_json_object({{ json_column }}, {{ format_json_path(json_path_list) }})
 {%- endmacro %}
 
 {# json_extract_string_array -------------------------------------------------     #}

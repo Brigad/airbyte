@@ -1,17 +1,17 @@
 # LinkedIn Ads
 
-This page guides you through the process of setting up the LinkedIn Ads source connector.
+This page contains the setup guide and reference information for the LinkedIn Ads source connector.
 
 ## Prerequisites
 
 <!-- env:cloud -->
-**For Airbyte Cloud:**
+### For Airbyte Cloud
 
 * The LinkedIn Ads account with permission to access data from accounts you want to sync.
 <!-- /env:cloud -->
 
 <!-- env:oss -->
-**For Airbyte Open Source:**
+### For Airbyte Open Source
 
 * The LinkedIn Ads account with permission to access data from accounts you want to sync.
 * Authentication Options:
@@ -23,10 +23,12 @@ This page guides you through the process of setting up the LinkedIn Ads source c
       * `Access Token` obtained from successful authorization with `Client ID` + `Client Secret`
 <!-- /env:oss -->
 
-## Step 1: Set up LinkedIn Ads
+## Setup guide
+
+### Step 1: Set up LinkedIn Ads
 
 1. [Login to LinkedIn](https://developer.linkedin.com/) with a developer account.
-2. Click the **Create App** icon on the center of the page or [use here](https://www.linkedin.com/developers/apps). Fill in the required fields:  
+2. Click the **Create App** icon in the center of the page or [use here](https://www.linkedin.com/developers/apps). Fill in the required fields:  
     1. For **App Name**, enter a name.
     2. For **LinkedIn Page**, enter your company's name or LinkedIn Company Page URL.
     3. For **Privacy policy URL**, enter the link to your company's privacy policy.
@@ -75,8 +77,7 @@ This page guides you through the process of setting up the LinkedIn Ads source c
 
 6. (Optional for Airbyte Cloud) Use the `access_token`. Same as the approach in  `Step 5` to authorize LinkedIn Ads connector.
 
-
-### Notes:
+:::note
 
 The API user account should be assigned the following permissions for the API endpoints:
 Endpoints such as: `Accounts`, `Account Users`, `Ad Direct Sponsored Contents`, `Campaign Groups`, `Campaigns`, and `Creatives` requires the following permissions set:
@@ -97,22 +98,31 @@ The API user account should be assigned one of the following roles:
 
 To edit these roles, sign in to Campaign Manager and follow [these instructions](https://www.linkedin.com/help/lms/answer/a496075).
 
-## Step 2: Set up the source connector in Airbyte
+:::
+
+### Step 2: Set up the LinkedIn Ads connector in Airbyte
 
 <!-- env:cloud -->
-**For Airbyte Cloud:**
+#### For Airbyte Cloud:
 
 1. [Login to your Airbyte Cloud](https://cloud.airbyte.com/workspaces) account.
-2. In the left navigation bar, click **Sources**. In the top-right corner, click **+ new source**.
-3. On the source setup page, select **LinkedIn Ads** from the Source type dropdown and enter a name for this connector.
-4. Add `Start Date` - the starting point for your data replication.
-5. Add your `Account IDs (Optional)` if required.
-6. Click **Authenticate your account**.
-7. Login and Authorize the LinkedIn Ads account
-8. Click **Set up source**.
+2. Click **Sources** and then click **+ New source**.
+3. On the Set up the source page, select **LinkedIn Ads** from the **Source type** dropdown.
+4. Enter a name for the LinkedIn Ads connector.
+5. Click **Authenticate your account**.
+6. Login and Authorize the LinkedIn Ads account
+7. Add `Start Date` - the starting point for your data replication.
+8. (Optional) Add your `Account IDs` if required.
+9. (Optional) Add `Custom Ad Analytics reports` by:
+   * click on **Add**
+   * complete the Name for the Report
+   * select **Pivot By** property for the report from the list
+   * select **Time Granularity** property for the report from the list
+10. Click **Set up source**.
+<!-- /env:cloud -->
 
 <!-- env:oss -->
-**For Airbyte Open Source:**
+#### For Airbyte Open Source:
 
 1. Go to the local Airbyte page.
 2. In the left navigation bar, click **Sources**. In the top-right corner, click **+ new source**.
@@ -122,48 +132,50 @@ To edit these roles, sign in to Campaign Manager and follow [these instructions]
 6. Choose between Authentication Options:
     1. For **OAuth2.0:** Copy and paste info (**Client ID**, **Client Secret**) from your **LinkedIn Ads developer application**, and obtain the **Refresh Token** using **Set up LinkedIn Ads**  guide steps and paste it into the corresponding field.
     2. For **Access Token:** Obtain the **Access Token** using **Set up LinkedIn Ads**  guide steps and paste it into the corresponding field.
-7. Click **Set up source**.
+7. Add `Start Date` - the starting point for your data replication.
+8. (Optional) Add your `Account IDs` if required.
+9. (Optional) Add `Custom Ad Analytics reports` by:
+   * click on **Add**
+   * complete the Name for the Report
+   * select **Pivot By** property for the report from the list
+   * select **Time Granularity** property for the report from the list
+10. Click **Set up source**.
 <!-- /env:oss -->
 
-## Supported Streams and Sync Modes
+## Supported sync modes
 
-This Source is capable of syncing the following data as streams:
+The LinkedIn Ads source connector supports the following[ sync modes](https://docs.airbyte.com/cloud/core-concepts#connection-sync-modes):
 
-- [Accounts](https://docs.microsoft.com/en-us/linkedin/marketing/integrations/ads/account-structure/create-and-manage-accounts?tabs=http#search-for-accounts)
-- [Account Users](https://docs.microsoft.com/en-us/linkedin/marketing/integrations/ads/account-structure/create-and-manage-account-users?tabs=http#find-ad-account-users-by-accounts)
-- [Campaign Groups](https://docs.microsoft.com/en-us/linkedin/marketing/integrations/ads/account-structure/create-and-manage-campaign-groups?tabs=http#search-for-campaign-groups)
-- [Campaigns](https://docs.microsoft.com/en-us/linkedin/marketing/integrations/ads/account-structure/create-and-manage-campaigns?tabs=http#search-for-campaigns)
-- [Creatives](https://docs.microsoft.com/en-us/linkedin/marketing/integrations/ads/account-structure/create-and-manage-creatives?tabs=http#search-for-creatives)
-- [Ad Direct Sponsored Contents](https://docs.microsoft.com/en-us/linkedin/marketing/integrations/ads/advertising-targeting/create-and-manage-video?tabs=http#finders)
-- [Ad Analytics by Campaign](https://docs.microsoft.com/en-us/linkedin/marketing/integrations/ads-reporting/ads-reporting?tabs=curl#ad-analytics)
-- [Ad Analytics by Creative](https://docs.microsoft.com/en-us/linkedin/marketing/integrations/ads-reporting/ads-reporting?tabs=curl#ad-analytics)
+- [Full Refresh - Overwrite](https://docs.airbyte.com/understanding-airbyte/connections/full-refresh-overwrite/)
+- [Full Refresh - Append](https://docs.airbyte.com/understanding-airbyte/connections/full-refresh-append)
+- [Incremental Sync - Append](https://docs.airbyte.com/understanding-airbyte/connections/incremental-append)
+- [Incremental Sync - Append + Deduped](https://docs.airbyte.com/understanding-airbyte/connections/incremental-append-deduped)
 
-| Sync Mode                                 | Supported?\(Yes/No\) |
-| :---------------------------------------- | :------------------- |
-| Full Refresh Overwrite Sync               | Yes                  |
-| Full Refresh Append Sync                  | Yes                  |
-| Incremental - Append Sync                 | Yes                  |
-| Incremental - Append + Deduplication Sync | Yes                  |
+## Supported Streams
 
-### NOTE:
+- [Accounts](https://learn.microsoft.com/en-us/linkedin/marketing/integrations/ads/account-structure/create-and-manage-accounts?tabs=http&view=li-lms-2023-05#search-for-accounts)
+- [Account Users](https://learn.microsoft.com/en-us/linkedin/marketing/integrations/ads/account-structure/create-and-manage-account-users?tabs=http&view=li-lms-2023-05#find-ad-account-users-by-accounts)
+- [Campaign Groups](https://learn.microsoft.com/en-us/linkedin/marketing/integrations/ads/account-structure/create-and-manage-campaign-groups?tabs=http&view=li-lms-2023-05#search-for-campaign-groups)
+- [Campaigns](https://learn.microsoft.com/en-us/linkedin/marketing/integrations/ads/account-structure/create-and-manage-campaigns?tabs=http&view=li-lms-2023-05#search-for-campaigns)
+- [Creatives](https://learn.microsoft.com/en-us/linkedin/marketing/integrations/ads/account-structure/create-and-manage-creatives?tabs=http%2Chttp-update-a-creative&view=li-lms-2023-05#search-for-creatives)
+- [Ad Analytics by Campaign](https://learn.microsoft.com/en-us/linkedin/marketing/integrations/ads-reporting/ads-reporting?tabs=curl&view=li-lms-2023-05#ad-analytics)
+- [Ad Analytics by Creative](https://learn.microsoft.com/en-us/linkedin/marketing/integrations/ads-reporting/ads-reporting?tabs=curl&view=li-lms-2023-05#ad-analytics)
+- [Ad Analytics by Impression Device](https://learn.microsoft.com/en-us/linkedin/marketing/integrations/ads-reporting/ads-reporting?tabs=curl&view=li-lms-2023-05#ad-analytics)
+- [Ad Analytics by Member Company Size](https://learn.microsoft.com/en-us/linkedin/marketing/integrations/ads-reporting/ads-reporting?tabs=curl&view=li-lms-2023-05#ad-analytics)
+- [Ad Analytics by Member Country](https://learn.microsoft.com/en-us/linkedin/marketing/integrations/ads-reporting/ads-reporting?tabs=curl&view=li-lms-2023-05#ad-analytics)
+- [Ad Analytics by Member Job Function](https://learn.microsoft.com/en-us/linkedin/marketing/integrations/ads-reporting/ads-reporting?tabs=curl&view=li-lms-2023-05#ad-analytics)
+- [Ad Analytics by Member Job Title](https://learn.microsoft.com/en-us/linkedin/marketing/integrations/ads-reporting/ads-reporting?tabs=curl&view=li-lms-2023-05#ad-analytics)
+- [Ad Analytics by Member Industry](https://learn.microsoft.com/en-us/linkedin/marketing/integrations/ads-reporting/ads-reporting?tabs=curl&view=li-lms-2023-05#ad-analytics)
+- [Ad Analytics by Member Region](https://learn.microsoft.com/en-us/linkedin/marketing/integrations/ads-reporting/ads-reporting?tabs=curl&view=li-lms-2023-05#ad-analytics)
+- [Ad Analytics by Member Company](https://learn.microsoft.com/en-us/linkedin/marketing/integrations/ads-reporting/ads-reporting?tabs=curl&view=li-lms-2023-05#ad-analytics)
 
-The `Ad Direct Sponsored Contents` stream includes information about VIDEO ADS, as well as `SINGLE IMAGE ADS` and other directly sponsored ads your account might have.
+:::info
 
 For Analytics Streams such as `Ad Analytics by Campaign` and `Ad Analytics by Creative`, the `pivot` column name is renamed to `_pivot` to handle the data normalization correctly and avoid name conflicts with certain destinations.
 
-### Data type mapping
+:::
 
-| Integration Type | Airbyte Type | Notes                      |
-| :--------------- | :----------- | :------------------------- |
-| `number`         | `number`     | float number               |
-| `integer`        | `integer`    | whole number               |
-| `date`           | `string`     | FORMAT YYYY-MM-DD          |
-| `datetime`       | `string`     | FORMAT YYYY-MM-DDThh:mm: ss |
-| `array`          | `array`      |                            |
-| `boolean`        | `boolean`    | True/False                 |
-| `string`         | `string`     |                            |
-
-### Performance considerations
+## Performance considerations
 
 LinkedIn Ads has Official Rate Limits for API Usage, [more information here](https://docs.microsoft.com/en-us/linkedin/shared/api-guide/concepts/rate-limits?context=linkedin/marketing/context). Rate limited requests will receive a 429 response. These limits reset at midnight UTC every day. In rare cases, LinkedIn may also return a 429 response as part of infrastructure protection. API service will return to normal automatically. In such cases, you will receive the following error message:
 
@@ -179,11 +191,30 @@ This is expected when the connector hits the 429 - Rate Limit Exceeded HTTP Erro
 
 After 5 unsuccessful attempts - the connector will stop the sync operation. In such cases check your Rate Limits [on this page](https://www.linkedin.com/developers/apps) &gt; Choose your app &gt; Analytics.
 
+## Data type map
+
+| Integration Type | Airbyte Type | Notes                       |
+|:-----------------|:-------------|:----------------------------|
+| `number`         | `number`     | float number                |
+| `integer`        | `integer`    | whole number                |
+| `date`           | `string`     | FORMAT YYYY-MM-DD           |
+| `datetime`       | `string`     | FORMAT YYYY-MM-DDThh:mm: ss |
+| `array`          | `array`      |                             |
+| `boolean`        | `boolean`    | True/False                  |
+| `string`         | `string`     |                             |
+
 ## Changelog
 
 | Version | Date       | Pull Request                                             | Subject                                                                                                         |
-|:--------|:-----------|:---------------------------------------------------------| :-------------------------------------------------------------------------------------------------------------- |
-| 0.1.15  | 2023-02-13 | [22940](https://github.com/airbytehq/airbyte/pull/22940) | Specified date formatting in specification                                                                         |
+|:--------|:-----------|:---------------------------------------------------------|:----------------------------------------------------------------------------------------------------------------|
+| 0.5.0   | 2023-08-14 | [29175](https://github.com/airbytehq/airbyte/pull/29175) | Add Custom report Constructor                                                                                   |
+| 0.4.0   | 2023-08-08 | [29175](https://github.com/airbytehq/airbyte/pull/29175) | Add analytics streams                                                                                           |
+| 0.3.1   | 2023-08-08 | [29189](https://github.com/airbytehq/airbyte/pull/29189) | Fix empty accounts field                                                                                        |
+| 0.3.0   | 2023-08-07 | [29045](https://github.com/airbytehq/airbyte/pull/29045) | Add new fields to schemas; convert datetime fields to `rfc3339`                                                 |
+| 0.2.1   | 2023-05-30 | [26780](https://github.com/airbytehq/airbyte/pull/26780) | Reduce records limit for Creatives Stream                                                                       |
+| 0.2.0   | 2023-05-23 | [26372](https://github.com/airbytehq/airbyte/pull/26372) | Migrate to LinkedIn API version: May 2023                                                                       |
+| 0.1.16  | 2023-05-24 | [26512](https://github.com/airbytehq/airbyte/pull/26512) | Removed authSpecification from spec.json in favour of advancedAuth                                              |
+| 0.1.15  | 2023-02-13 | [22940](https://github.com/airbytehq/airbyte/pull/22940) | Specified date formatting in specification                                                                      |
 | 0.1.14  | 2023-02-03 | [22361](https://github.com/airbytehq/airbyte/pull/22361) | Turn on default HttpAvailabilityStrategy                                                                        |
 | 0.1.13  | 2023-01-27 | [22013](https://github.com/airbytehq/airbyte/pull/22013) | for adDirectSponsoredContents stream skip accounts which are part of organization                               |
 | 0.1.12  | 2022-10-18 | [18111](https://github.com/airbytehq/airbyte/pull/18111) | for adDirectSponsoredContents stream skip accounts which are part of organization                               |
@@ -192,7 +223,7 @@ After 5 unsuccessful attempts - the connector will stop the sync operation. In s
 | 0.1.9   | 2022-07-21 | [14924](https://github.com/airbytehq/airbyte/pull/14924) | Remove `additionalProperties` field from schemas                                                                |
 | 0.1.8   | 2022-06-07 | [13495](https://github.com/airbytehq/airbyte/pull/13495) | Fixed `base-normalization` issue on `Destination Redshift` caused by wrong casting of `pivot` column            |
 | 0.1.7   | 2022-05-04 | [12482](https://github.com/airbytehq/airbyte/pull/12482) | Update input configuration copy                                                                                 |
-| 0.1.6   | 2022-04-04 | [11690](https://github.com/airbytehq/airbyte/pull/11690) | Small documentation corrections                                                                                  |
+| 0.1.6   | 2022-04-04 | [11690](https://github.com/airbytehq/airbyte/pull/11690) | Small documentation corrections                                                                                 |
 | 0.1.5   | 2021-12-21 | [8984](https://github.com/airbytehq/airbyte/pull/8984)   | Update connector fields title/description                                                                       |
 | 0.1.4   | 2021-12-02 | [8382](https://github.com/airbytehq/airbyte/pull/8382)   | Modify log message in rate-limit cases                                                                          |
 | 0.1.3   | 2021-11-11 | [7839](https://github.com/airbytehq/airbyte/pull/7839)   | Added OAuth support                                                                                             |

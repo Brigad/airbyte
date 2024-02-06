@@ -8,6 +8,7 @@ import socket
 from typing import Any, Generator, List, MutableMapping, Union
 
 from airbyte_cdk.logger import AirbyteLogger
+from airbyte_cdk.models import FailureType
 from airbyte_cdk.models.airbyte_protocol import (
     AirbyteCatalog,
     AirbyteConnectionStatus,
@@ -18,6 +19,7 @@ from airbyte_cdk.models.airbyte_protocol import (
     Type,
 )
 from airbyte_cdk.sources.source import Source
+from airbyte_cdk.utils import AirbyteTracedException
 from apiclient import errors
 from google.auth import exceptions as google_exceptions
 from requests.status_codes import codes as status_codes
@@ -41,9 +43,6 @@ class SourceGoogleSheets(Source):
     Spreadsheets API Reference: https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets
     """
 
-    def __init__(self):
-        super().__init__()
-
     def check(self, logger: AirbyteLogger, config: json) -> AirbyteConnectionStatus:
         # Check involves verifying that the specified spreadsheet is reachable with our credentials.
         try:
@@ -56,18 +55,22 @@ class SourceGoogleSheets(Source):
         try:
             spreadsheet = client.get(spreadsheetId=spreadsheet_id, includeGridData=False)
         except errors.HttpError as err:
-            reason = str(err)
+            message = "Config error: "
             # Give a clearer message if it's a common error like 404.
             if err.resp.status == status_codes.NOT_FOUND:
-                reason = "Requested spreadsheet was not found."
-            logger.error(f"Formatted error: {reason}")
-            return AirbyteConnectionStatus(
-                status=Status.FAILED, message=f"Unable to connect with the provided credentials to spreadsheet. Error: {reason}"
-            )
+                message += "The spreadsheet link is not valid. Enter the URL of the Google spreadsheet you want to sync."
+            raise AirbyteTracedException(
+                message=message,
+                internal_message=message,
+                failure_type=FailureType.config_error,
+            ) from err
         except google_exceptions.GoogleAuthError as err:
-            return AirbyteConnectionStatus(
-                status=Status.FAILED, message=f"Unable to connect with the provided credentials to spreadsheet. Authentication Error: {err}"
-            )
+            message = "Access to the spreadsheet expired or was revoked. Re-authenticate to restore access."
+            raise AirbyteTracedException(
+                message=message,
+                internal_message=message,
+                failure_type=FailureType.config_error,
+            ) from err
 
         # Check for duplicate headers
         spreadsheet_metadata = Spreadsheet.parse_obj(spreadsheet)
@@ -129,8 +132,21 @@ class SourceGoogleSheets(Source):
 
         except errors.HttpError as err:
             reason = str(err)
-            if err.resp.status == status_codes.NOT_FOUND:
-                reason = "Requested spreadsheet was not found."
+            config_error_status_codes = [status_codes.NOT_FOUND, status_codes.FORBIDDEN]
+            if err.resp.status in config_error_status_codes:
+                if err.resp.status == status_codes.NOT_FOUND:
+                    reason = f"Requested spreadsheet with id {spreadsheet_id} was not found"
+                if err.resp.status == status_codes.FORBIDDEN:
+                    reason = f"Forbidden when requesting spreadsheet with id {spreadsheet_id}"
+                message = (
+                    f"{reason}. {err.reason}. See docs for more details here: "
+                    f"https://cloud.google.com/service-infrastructure/docs/service-control/reference/rpc/google.api/servicecontrol.v1#code"
+                )
+                raise AirbyteTracedException(
+                    message=message,
+                    internal_message=message,
+                    failure_type=FailureType.config_error,
+                ) from err
             raise Exception(f"Could not run discovery: {reason}")
 
     def read(
@@ -156,32 +172,40 @@ class SourceGoogleSheets(Source):
         logger.info(f"Row counts: {sheet_row_counts}")
         for sheet in sheet_to_column_index_to_name.keys():
             logger.info(f"Syncing sheet {sheet}")
-            column_index_to_name = sheet_to_column_index_to_name[sheet]
-            row_cursor = 2  # we start syncing past the header row
-            # For the loop, it is necessary that the initial row exists when we send a request to the API,
-            # if the last row of the interval goes outside the sheet - this is normal, we will return
-            # only the real data of the sheet and in the next iteration we will loop out.
-            while row_cursor <= sheet_row_counts[sheet]:
-                range = f"{sheet}!{row_cursor}:{row_cursor + row_batch_size}"
-                logger.info(f"Fetching range {range}")
-                row_batch = SpreadsheetValues.parse_obj(
-                    client.get_values(spreadsheetId=spreadsheet_id, ranges=range, majorDimension="ROWS")
-                )
+            # We revalidate the sheet here to avoid errors in case the sheet was changed after the sync started
+            is_valid, reason = Helpers.check_sheet_is_valid(client, spreadsheet_id, sheet)
+            if is_valid:
+                column_index_to_name = sheet_to_column_index_to_name[sheet]
+                row_cursor = 2  # we start syncing past the header row
+                # For the loop, it is necessary that the initial row exists when we send a request to the API,
+                # if the last row of the interval goes outside the sheet - this is normal, we will return
+                # only the real data of the sheet and in the next iteration we will loop out.
+                while row_cursor <= sheet_row_counts[sheet]:
+                    range = f"{sheet}!{row_cursor}:{row_cursor + row_batch_size}"
+                    logger.info(f"Fetching range {range}")
+                    row_batch = SpreadsheetValues.parse_obj(
+                        client.get_values(spreadsheetId=spreadsheet_id, ranges=range, majorDimension="ROWS")
+                    )
 
-                row_cursor += row_batch_size + 1
-                # there should always be one range since we requested only one
-                value_ranges = row_batch.valueRanges[0]
+                    row_cursor += row_batch_size + 1
+                    # there should always be one range since we requested only one
+                    value_ranges = row_batch.valueRanges[0]
 
-                if not value_ranges.values:
-                    break
+                    if not value_ranges.values:
+                        break
 
-                row_values = value_ranges.values
-                if len(row_values) == 0:
-                    break
+                    row_values = value_ranges.values
+                    if len(row_values) == 0:
+                        break
 
-                for row in row_values:
-                    if not Helpers.is_row_empty(row) and Helpers.row_contains_relevant_data(row, column_index_to_name.keys()):
-                        yield AirbyteMessage(type=Type.RECORD, record=Helpers.row_data_to_record_message(sheet, row, column_index_to_name))
+                    for row in row_values:
+                        if not Helpers.is_row_empty(row) and Helpers.row_contains_relevant_data(row, column_index_to_name.keys()):
+                            yield AirbyteMessage(
+                                type=Type.RECORD, record=Helpers.row_data_to_record_message(sheet, row, column_index_to_name)
+                            )
+            else:
+                logger.info(f"Skipping syncing sheet {sheet}: {reason}")
+
         logger.info(f"Finished syncing spreadsheet {spreadsheet_id}")
 
     @staticmethod

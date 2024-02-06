@@ -9,11 +9,7 @@
 {% endmacro %}
 
 {%- macro redshift__type_json() -%}
-  {%- if redshift_super_type() -%}
     super
-  {%- else -%}
-    varchar
-  {%- endif -%}
 {%- endmacro -%}
 
 {% macro postgres__type_json() %}
@@ -27,6 +23,10 @@
 {% macro snowflake__type_json() %}
     variant
 {% endmacro %}
+
+{%- macro databricks__type_json() -%}
+    string
+{%- endmacro -%}
 
 {%- macro mysql__type_json() -%}
     json
@@ -79,6 +79,7 @@
     VARCHAR
 {%- endmacro -%}
 
+
 {# float ------------------------------------------------- #}
 {% macro mysql__type_float() %}
     float
@@ -125,6 +126,10 @@
     INTEGER
 {% endmacro %}
 
+{% macro databricks__type_int() %}
+    INT
+{% endmacro %}
+
 {# bigint ------------------------------------------------- #}
 {% macro mysql__type_bigint() %}
     signed
@@ -146,6 +151,10 @@
     BIGINT
 {% endmacro %}
 
+{% macro databricks__type_bigint() %}
+    BIGINT
+{% endmacro %}
+
 {# numeric ------------------------------------------------- --#}
 {% macro mysql__type_numeric() %}
     float
@@ -160,6 +169,10 @@
 {% endmacro %}
 
 {% macro duckdb__type_numeric() %}
+    DOUBLE
+{% endmacro %}
+
+{% macro databricks__type_numeric() %}
     DOUBLE
 {% endmacro %}
 
@@ -231,6 +244,12 @@ so this macro needs to be called very_large_integer.
 {% endmacro %}
 
 {% macro bigquery__type_timestamp_with_timezone() %}
+    timestamp
+{% endmacro %}
+
+{#-- Spark timestamps are already 'point in time', even if converted / stored without the original tz info, relative to session tz  --#}
+{#-- cf: https://docs.databricks.com/spark/latest/dataframes-datasets/dates-timestamps.html --#}
+{% macro databricks__type_timestamp_with_timezone() %}
     timestamp
 {% endmacro %}
 

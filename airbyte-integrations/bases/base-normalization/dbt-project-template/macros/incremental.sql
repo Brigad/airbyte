@@ -2,6 +2,7 @@
     These macros control how incremental models are updated in Airbyte's normalization step
     - get_max_normalized_cursor retrieve the value of the last normalized data
     - incremental_clause controls the predicate to filter on new data to process incrementally
+    - alter_relation_add_remove_columns allows sync_all_columns from databricks
 #}
 
 {% macro incremental_clause(col_emitted_at, tablename)  -%}
@@ -58,4 +59,67 @@ and ((select max(cast({{ col_emitted_at }} as {{ type_timestamp_with_timezone() 
     {% do return(env_var('INCREMENTAL_CURSOR')) %}
  {% endif %}
 {% endif %}
+{% endmacro %}
+
+{% macro databricks__alter_relation_add_remove_columns(relation, add_columns, remove_columns) %}
+    {%- set drop_unallowed = true -%}
+    {% if remove_columns %}
+        {% if relation.is_delta %}
+            {% set platform_name = 'Delta Lake' %}
+            {%- set tblproperties = config.get('tblproperties') -%}
+            {%- if not tblproperties -%}
+                {%- set tblproperties = fetch_tbl_properties(relation) -%}
+            {%- endif -%}
+            {%- set good_predicates = namespace(predicates=0) -%}
+            {%- for prop in tblproperties -%}
+                {%- if prop == 'delta.minReaderVersion' and tblproperties[prop] == '2' -%}
+                    {%- set good_predicates.predicates = good_predicates.predicates + 1 -%}
+                    {{ log("Incremented good predicates to " ~ good_predicates, True) }}
+                {%- elif prop == 'delta.minWriterVersion' and tblproperties[prop] == '5' -%}
+                    {%- set good_predicates.predicates = good_predicates.predicates + 1 -%}
+                {%- elif prop == 'delta.columnMapping.mode' and tblproperties[prop] == 'name' -%}
+                    {%- set good_predicates.predicates = good_predicates.predicates + 1 -%}
+                {%- endif -%}
+            {%- endfor -%}
+            {%- if good_predicates.predicates == 3 -%}
+                {%- set drop_unallowed = false -%}
+            {%- endif -%}
+        {% elif relation.is_iceberg %} {% set platform_name = 'Iceberg' %}
+        {% else %} {% set platform_name = 'Apache Spark' %}
+        {% endif %}
+        {% if drop_unallowed %}
+            {% if relation.is_delta %}
+                {{ exceptions.raise_compiler_error('To allow dropping column, ensure you have tblproperties set as followed : delta.minReaderVersion: 2 / delta.minWriterVersion: 5 / delta.columnMapping.mode: name') }}
+            {% endif %}
+            {{ exceptions.raise_compiler_error(platform_name + ' does not support dropping columns from tables') }}
+        {% endif %}
+    {% endif %}
+
+    {% if remove_columns is none %} {% set remove_columns = [] %} {% endif %}
+    {% set drop_sql -%}
+
+    alter {{ relation.type }} {{ relation }}
+
+    drop columns
+        {% for column in remove_columns %}
+            {{ column.name }} {{ ',' if not loop.last }}
+        {% endfor %}
+    {%- endset -%}
+
+    {% if add_columns is none %} {% set add_columns = [] %} {% endif %}
+
+    {% set add_sql -%}
+
+     alter {{ relation.type }} {{ relation }}
+
+       add columns
+            {% for column in add_columns %}
+               {{ column.name }} {{ column.data_type }}{{ ',' if not loop.last }}
+            {% endfor %}
+
+    {%- endset -%}
+
+    {% if remove_columns %} {% do run_query(drop_sql) %} {% endif %}
+    {% if add_columns %} {% do run_query(add_sql) %} {% endif %}
+
 {% endmacro %}

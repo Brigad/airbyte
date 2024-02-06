@@ -388,6 +388,8 @@ class DbtIntegrationTest(object):
             }
         elif destination_type.value == DestinationType.MYSQL.value:
             profiles_config["database"] = self.target_schema
+        elif destination_type.value == DestinationType.DATABRICKS.value:
+            profiles_config["database_schema"] = self.target_schema
         elif destination_type.value == DestinationType.REDSHIFT.value:
             profiles_config["schema"] = self.target_schema
             if random_schema:
@@ -415,7 +417,7 @@ class DbtIntegrationTest(object):
                             line = input_data.readline()
                             if not line:
                                 break
-                            if not line.startswith(b"#"):
+                            if not line.startswith(b"//"):
                                 process.stdin.write(line)
                 process.stdin.close()
 
@@ -444,6 +446,8 @@ class DbtIntegrationTest(object):
             return "airbyte/normalization-redshift:dev"
         elif DestinationType.TIDB.value == destination_type.value:
             return "airbyte/normalization-tidb:dev"
+        elif DestinationType.DATABRICKS.value == destination_type.value:
+            return "airbyte/normalization-databricks:dev"
         else:
             return "airbyte/normalization:dev"
 
@@ -476,7 +480,7 @@ class DbtIntegrationTest(object):
         """
         Run dbt subprocess while checking and counting for "ERROR", "FAIL" or "WARNING" printed in its outputs
         """
-        if normalization_image.startswith("airbyte/normalization-oracle") or normalization_image.startswith("airbyte/normalization-clickhouse"):
+        if any([normalization_image.startswith(x) for x in ["airbyte/normalization-oracle", "airbyte/normalization-clickhouse"]]):
             dbtAdditionalArgs = []
         else:
             dbtAdditionalArgs = ["--event-buffer-size=10000"]

@@ -99,6 +99,7 @@ class StreamProcessor(object):
         properties: Dict,
         tables_registry: TableNameRegistry,
         from_table: Union[str, dbt_macro.Macro],
+        should_normalize_children: bool = True,
     ):
         """
         See StreamProcessor.create()
@@ -128,6 +129,7 @@ class StreamProcessor(object):
         self.airbyte_normalized_at = "_airbyte_normalized_at"
         self.airbyte_unique_key = "_airbyte_unique_key"
         self.models_to_source: Dict[str, str] = {}
+        self.should_normalize_children = should_normalize_children
 
     @staticmethod
     def create_from_parent(
@@ -185,6 +187,7 @@ class StreamProcessor(object):
         properties: Dict,
         tables_registry: TableNameRegistry,
         from_table: Union[str, dbt_macro.Macro],
+        should_normalize_children: bool = True,
     ) -> "StreamProcessor":
         """
         @param stream_name of the stream being processed
@@ -218,6 +221,7 @@ class StreamProcessor(object):
             properties,
             tables_registry,
             from_table,
+            should_normalize_children,
         )
 
     def collect_table_names(self):
@@ -312,7 +316,11 @@ class StreamProcessor(object):
                 unique_key=self.get_unique_key(),
                 partition_by=PartitionScheme.UNIQUE_KEY,
             )
-        return self.find_children_streams(from_table, column_names)
+        children = []
+        if self.should_normalize_children:
+            children = self.find_children_streams(from_table, column_names)
+
+        return children
 
     def extract_column_names(self) -> Dict[str, Tuple[str, str]]:
         """
@@ -801,8 +809,15 @@ where 1 = 1
             col_cdc_log_pos = self.name_transformer.normalize_column_name("_ab_cdc_log_pos")
             quoted_col_cdc_log_pos = self.name_transformer.normalize_column_name("_ab_cdc_log_pos", in_jinja=True)
             cdc_updated_order_pattern += f"\n            {col_cdc_log_pos} desc,"
-            cdc_cols += f", {cast_begin}{col_cdc_log_pos}{cast_as}" + "{{ dbt_utils.type_string() }}" + f"{cast_end}"
+            cdc_cols += "".join([", ", cast_begin, col_cdc_log_pos, cast_as, "{{ dbt_utils.type_string() }}", cast_end])
             quoted_cdc_cols += f", {quoted_col_cdc_log_pos}"
+
+        if "_ab_cdc_lsn" in column_names.keys():
+            col_cdc_lsn = self.name_transformer.normalize_column_name("_ab_cdc_lsn")
+            quoted_col_cdc_lsn = self.name_transformer.normalize_column_name("_ab_cdc_lsn", in_jinja=True)
+            cdc_updated_order_pattern += f"\n            {col_cdc_lsn} desc,"
+            cdc_cols += "".join([", ", cast_begin, col_cdc_lsn, cast_as, "{{ dbt_utils.type_string() }}", cast_end])
+            quoted_cdc_cols += f", {quoted_col_cdc_lsn}"
 
         if (
             self.destination_type == DestinationType.BIGQUERY
@@ -1016,6 +1031,8 @@ from dedup_data where {{ airbyte_row_num }} = 1
                 return "_ab_cdc_updated_at"
             elif "_ab_cdc_log_pos" in column_names.keys():
                 return "_ab_cdc_log_pos"
+            elif "_ab_cdc_lsn" in column_names.keys():
+                return "_ab_cdc_lsn"
             else:
                 return self.airbyte_emitted_at
         elif len(self.cursor_field) == 1:
@@ -1177,6 +1194,7 @@ where 1 = 1
             stg_table = self.tables_registry.get_file_name(schema, self.json_path, self.stream_name, "stg", truncate_name)
             if self.name_transformer.needs_quotes(stg_table):
                 stg_table = jinja_call(self.name_transformer.apply_quote(stg_table))
+            # Merge statement for databricks remove the use for this part
             if suffix == "scd":
                 hooks = []
 
@@ -1267,7 +1285,8 @@ where 1 = 1
                     unique_key_reference=unique_key_reference,
                     clickhouse_nullable_join_setting=clickhouse_nullable_join_setting,
                 )
-                hooks.append(deletion_hook)
+                if self.destination_type != DestinationType.DATABRICKS:
+                    hooks.append(deletion_hook)
 
                 if self.destination_type.value == DestinationType.POSTGRES.value:
                     # Keep only rows with the max emitted_at to keep incremental behavior
@@ -1277,6 +1296,27 @@ where 1 = 1
                 else:
                     hooks.append(f"drop view {stg_schema}.{stg_table}")
 
+                source_table_name = self.from_table.table_name
+                print(f"  Adding drop table hook for {source_table_name} to {file_name}")
+                source_deletion_hook = Template(
+                    """
+                    {{ '{%' }}
+                        set source_table_relation = adapter.get_relation(
+                            database=this.database,
+                            schema=this.schema,
+                            identifier='{{ source_table_name }}'
+                        )
+                    {{ '%}' }}
+                    {{ '{%' }}
+                        if source_table_relation is not none
+                    {{ '%}' }}
+                    {{ '{%' }}
+                            do adapter.drop_relation(source_table_relation)
+                    {{ '%}' }}
+                    {{ '{% endif %}' }}
+                        """
+                ).render(source_table_name=source_table_name)
+                hooks.append(source_deletion_hook)
                 config["post_hook"] = "[" + ",".join(map(wrap_in_quotes, hooks)) + "]"
             else:
                 # incremental is handled in the SCD SQL already
